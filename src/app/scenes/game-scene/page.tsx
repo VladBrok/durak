@@ -106,6 +106,7 @@ export default function GameScene() {
     const tl = gsap.timeline({
       defaults: {
         duration: 0.7,
+        ease: "back.out(0.7)",
       },
     });
 
@@ -149,6 +150,15 @@ export default function GameScene() {
     };
 
     animate(1);
+
+    tl.to(`.${styles["card-static-center"]}:nth-child(n+${25})`, {
+      x: () => -document.documentElement.clientWidth / 2 + 79 / 2,
+      y: () => -document.documentElement.clientHeight / 2 + 123 / 2,
+      duration: 1,
+      ease: "none",
+    });
+
+    tl.progress(1);
   }, [startDistribution]);
 
   return (
