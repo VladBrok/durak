@@ -15,6 +15,7 @@ const CARD_COUNT = 80;
 export default function GameScene() {
   const [cards, setCards] = useState(Array(CARD_COUNT).fill(null));
   const startedAnimation = useRef(false);
+  const [startDistribution, setStartDistribution] = useState(false);
 
   useEffect(() => {
     if (startedAnimation.current) {
@@ -28,13 +29,13 @@ export default function GameScene() {
       x: () => document.documentElement.clientWidth,
     });
 
-    const tl = gsap.timeline({ defaults: { duration: 2 } });
+    const cornerMovementTl = gsap.timeline({ defaults: { duration: 2 } });
 
-    tl.to(`.${styles.card}`, {
+    cornerMovementTl.to(`.${styles.card}`, {
       y: () => document.documentElement.clientHeight + 123,
       zIndex: 0,
     });
-    tl.to(
+    cornerMovementTl.to(
       `.${styles.card}`,
       {
         x: () => -79,
@@ -42,7 +43,7 @@ export default function GameScene() {
       },
       "<95%"
     );
-    tl.to(
+    cornerMovementTl.to(
       `.${styles.card}`,
       {
         y: 0,
@@ -50,7 +51,7 @@ export default function GameScene() {
       },
       "<95%"
     );
-    tl.to(
+    cornerMovementTl.to(
       `.${styles.card}`,
       {
         x: () => document.documentElement.clientWidth + 79,
@@ -58,10 +59,11 @@ export default function GameScene() {
       },
       "<95%"
     );
+    cornerMovementTl.progress(1);
 
     let cardsAtCenterCount = 0;
 
-    gsap.to(`.${styles.card}`, {
+    const tw = gsap.to(`.${styles.card}`, {
       y: () => document.documentElement.clientHeight / 2 + 123 / 2,
       x: () => document.documentElement.clientWidth / 2 - 79 / 2,
       zIndex: -5,
@@ -70,8 +72,6 @@ export default function GameScene() {
         each: 0.1,
         onComplete: () => {
           cardsAtCenterCount++;
-
-          gsap.set(`.${styles["card-center"]}`, { opacity: 1 });
 
           if (CARD_COUNT - cardsAtCenterCount < 20) {
             return;
@@ -86,14 +86,75 @@ export default function GameScene() {
         },
       },
       onComplete: () => {
-        gsap.set(`.${styles.card}`, { opacity: 0 });
+        [...document.querySelectorAll(`.${styles.card}`)].forEach((el) => {
+          el.classList.remove(styles.card);
+          el.classList.add(styles["card-static-center"]);
+          gsap.set(el, { opacity: 1, x: 0, y: 0 });
+          setStartDistribution(true);
+        });
       },
     });
+
+    tw.progress(1);
   }, []);
+
+  useEffect(() => {
+    if (!startDistribution) {
+      return;
+    }
+
+    const tl = gsap.timeline({
+      defaults: {
+        duration: 0.7,
+      },
+    });
+
+    const tlPosition = "<55%";
+
+    const animate = (childIdx: number) => {
+      if (childIdx > 24) {
+        return;
+      }
+
+      tl.to(
+        `.${styles["card-static-center"]}:nth-child(${childIdx})`,
+        {
+          y: () => -document.documentElement.clientHeight / 2,
+        },
+        tlPosition
+      );
+      tl.to(
+        `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`,
+        {
+          x: () => document.documentElement.clientWidth / 2,
+        },
+        tlPosition
+      );
+      tl.to(
+        `.${styles["card-static-center"]}:nth-child(${childIdx + 2})`,
+        {
+          y: () => document.documentElement.clientHeight / 2 - 123 / 2,
+        },
+        tlPosition
+      );
+      tl.to(
+        `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`,
+        {
+          x: () => -document.documentElement.clientWidth / 2,
+        },
+        tlPosition
+      );
+
+      animate(childIdx + 4);
+    };
+
+    animate(1);
+  }, [startDistribution]);
 
   return (
     <>
       {cards.map((_, i) => (
+        // TODO: extract card component
         <div className={`${styles.card}`} key={i}>
           <Image
             src="/images/cards/card-back.png"
@@ -103,17 +164,6 @@ export default function GameScene() {
           />
         </div>
       ))}
-
-      <div className={styles["card-container"]}>
-        <div className={`${styles["card-center"]}`}>
-          <Image
-            src="/images/cards/card-back.png"
-            width={79}
-            height={123}
-            alt="card-back"
-          />
-        </div>
-      </div>
     </>
   );
 }

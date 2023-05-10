@@ -5,17 +5,10 @@
   top: -123px;
 }
 
-.card-center {
+.card-static-center {
   width: 79px;
   height: 123px;
-  z-index: -10;
-  opacity: 0;
-}
-
-.card-container {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  top: calc(50% - 123px / 2);
+  left: calc(50% - 79px / 2);
 }
