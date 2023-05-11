@@ -6,6 +6,7 @@ import { gsap } from "gsap";
 import { Flip } from "gsap/all";
 import { useEffect, useRef, useState } from "react";
 import { getCssVarValue } from "../../../utils/getCssVarValue";
+import TextButton from "../../../components/text-button/text-button";
 
 gsap.registerPlugin(Flip);
 
@@ -15,10 +16,14 @@ const CARDS_PER_PLAYER = 6;
 
 export default function GameScene() {
   const [cards, setCards] = useState(Array(CARD_COUNT).fill(null));
-  const startedAnimation = useRef(false);
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true);
+  const [tweens, setTweens] = useState<
+    (gsap.core.Timeline | gsap.core.Tween)[]
+  >([]);
+  const startedAnimation = useRef(false);
 
   useEffect(() => {
     setCardWidth(getCssVarValue("--card-width"));
@@ -67,7 +72,8 @@ export default function GameScene() {
       },
       "<95%"
     );
-    cornerMovementTl.progress(1);
+
+    setTweens((prev) => [...prev, cornerMovementTl]);
 
     let cardsAtCenterCount = 0;
 
@@ -104,9 +110,10 @@ export default function GameScene() {
       },
     });
 
-    tw.progress(1);
+    setTweens((prev) => [...prev, tw]);
   }, [cardWidth, cardHeight]);
 
+  // TODO: make this responsive (cards are at fixed positions after an animation ends)
   useEffect(() => {
     if (!startDistribution || !cardWidth || !cardHeight) {
       return;
@@ -116,6 +123,9 @@ export default function GameScene() {
       defaults: {
         duration: 0.7,
         ease: "back.out(0.7)",
+      },
+      onComplete: () => {
+        setShowSkipAnimationButton(false);
       },
     });
 
@@ -178,8 +188,22 @@ export default function GameScene() {
       }
     );
 
-    tl.progress(1);
+    setTweens((prev) => [...prev, tl]);
   }, [startDistribution, cardHeight, cardWidth]);
+
+  useEffect(() => {
+    if (showSkipAnimationButton) {
+      return;
+    }
+
+    tweens.forEach((tween) => {
+      tween.progress(1);
+    });
+  }, [tweens, showSkipAnimationButton]);
+
+  function skipAnimation(): void {
+    setShowSkipAnimationButton(false);
+  }
 
   return (
     <>
@@ -198,6 +222,11 @@ export default function GameScene() {
             </div>
           ))}
       </div>
+      {showSkipAnimationButton && (
+        <div className={styles["skip-button"]}>
+          <TextButton onClick={skipAnimation} text="Skip" />
+        </div>
+      )}
     </>
   );
 }

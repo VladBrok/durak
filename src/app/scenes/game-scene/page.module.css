@@ -12,3 +12,9 @@
   top: calc(50% - var(--card-height) / 2);
   left: calc(50% - var(--card-width) / 2);
 }
+
+.skip-button {
+  position: absolute;
+  bottom: 2rem;
+  right: 3.5rem;
+}

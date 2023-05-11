@@ -1,0 +1,18 @@
+.container {
+  display: block;
+  background: transparent;
+  border: none;
+}
+
+.container:not(:disabled):hover {
+  transform: scale(1.1);
+}
+
+.container:not(:disabled):active {
+  transform: scale(1);
+}
+
+.text-svg {
+  text-shadow: 1px 0px 1px rgb(97, 100, 5);
+  filter: brightness(120%);
+}
