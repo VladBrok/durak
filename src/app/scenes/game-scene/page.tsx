@@ -9,6 +9,8 @@ import { useEffect, useRef, useState } from "react";
 gsap.registerPlugin(Flip);
 
 const CARD_COUNT = 80;
+const PLAYER_COUNT = 4;
+const CARDS_PER_PLAYER = 6;
 
 // TODO: extract card width and card height from css and ts into constants
 
@@ -113,7 +115,7 @@ export default function GameScene() {
     const tlPosition = "<55%";
 
     const animate = (childIdx: number) => {
-      if (childIdx > 24) {
+      if (childIdx > PLAYER_COUNT * CARDS_PER_PLAYER) {
         return;
       }
 
@@ -124,39 +126,50 @@ export default function GameScene() {
         },
         tlPosition
       );
+      if (PLAYER_COUNT > 2) {
+        tl.to(
+          `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`,
+          {
+            x: () => document.documentElement.clientWidth / 2,
+          },
+          tlPosition
+        );
+      }
       tl.to(
-        `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`,
-        {
-          x: () => document.documentElement.clientWidth / 2,
-        },
-        tlPosition
-      );
-      tl.to(
-        `.${styles["card-static-center"]}:nth-child(${childIdx + 2})`,
+        `.${styles["card-static-center"]}:nth-child(${
+          childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
+        })`,
         {
           y: () => document.documentElement.clientHeight / 2 - 123 / 2,
         },
         tlPosition
       );
-      tl.to(
-        `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`,
-        {
-          x: () => -document.documentElement.clientWidth / 2,
-        },
-        tlPosition
-      );
+      if (PLAYER_COUNT > 3) {
+        tl.to(
+          `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`,
+          {
+            x: () => -document.documentElement.clientWidth / 2,
+          },
+          tlPosition
+        );
+      }
 
-      animate(childIdx + 4);
+      animate(childIdx + PLAYER_COUNT);
     };
 
     animate(1);
 
-    tl.to(`.${styles["card-static-center"]}:nth-child(n+${25})`, {
-      x: () => -document.documentElement.clientWidth / 2 + 79 / 2,
-      y: () => -document.documentElement.clientHeight / 2 + 123 / 2,
-      duration: 1,
-      ease: "none",
-    });
+    tl.to(
+      `.${styles["card-static-center"]}:nth-child(n+${
+        PLAYER_COUNT * CARDS_PER_PLAYER + 1
+      })`,
+      {
+        x: () => -document.documentElement.clientWidth / 2 + 79 / 2,
+        y: () => -document.documentElement.clientHeight / 2 + 123 / 2,
+        duration: 1,
+        ease: "none",
+      }
+    );
 
     tl.progress(1);
   }, [startDistribution]);
