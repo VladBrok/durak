@@ -1,3 +1,8 @@
+:root {
+  --card-width: 79px;
+  --card-height: 123px;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;

@@ -1,14 +1,14 @@
 .card {
-  width: 79px;
-  height: 123px;
+  width: var(--card-width);
+  height: var(--card-height);
   position: absolute;
-  top: -123px;
+  top: calc(var(--card-height) * -1);
 }
 
 .card-static-center {
-  width: 79px;
-  height: 123px;
+  width: var(--card-width);
+  height: var(--card-height);
   position: absolute;
-  top: calc(50% - 123px / 2);
-  left: calc(50% - 79px / 2);
+  top: calc(50% - var(--card-height) / 2);
+  left: calc(50% - var(--card-width) / 2);
 }

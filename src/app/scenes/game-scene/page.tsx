@@ -5,6 +5,7 @@ import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/all";
 import { useEffect, useRef, useState } from "react";
+import { getCssVarValue } from "../../../utils/getCssVarValue";
 
 gsap.registerPlugin(Flip);
 
@@ -12,15 +13,20 @@ const CARD_COUNT = 80;
 const PLAYER_COUNT = 4;
 const CARDS_PER_PLAYER = 6;
 
-// TODO: extract card width and card height from css and ts into constants
-
 export default function GameScene() {
   const [cards, setCards] = useState(Array(CARD_COUNT).fill(null));
   const startedAnimation = useRef(false);
   const [startDistribution, setStartDistribution] = useState(false);
+  const [cardWidth, setCardWidth] = useState(0);
+  const [cardHeight, setCardHeight] = useState(0);
 
   useEffect(() => {
-    if (startedAnimation.current) {
+    setCardWidth(getCssVarValue("--card-width"));
+    setCardHeight(getCssVarValue("--card-height"));
+  }, []);
+
+  useEffect(() => {
+    if (startedAnimation.current || !cardWidth || !cardHeight) {
       return;
     }
 
@@ -34,13 +40,13 @@ export default function GameScene() {
     const cornerMovementTl = gsap.timeline({ defaults: { duration: 2 } });
 
     cornerMovementTl.to(`.${styles.card}`, {
-      y: () => document.documentElement.clientHeight + 123,
+      y: () => document.documentElement.clientHeight + cardHeight,
       zIndex: 0,
     });
     cornerMovementTl.to(
       `.${styles.card}`,
       {
-        x: () => -79,
+        x: () => -cardWidth,
         zIndex: 0,
       },
       "<95%"
@@ -56,7 +62,7 @@ export default function GameScene() {
     cornerMovementTl.to(
       `.${styles.card}`,
       {
-        x: () => document.documentElement.clientWidth + 79,
+        x: () => document.documentElement.clientWidth + cardWidth,
         zIndex: 0,
       },
       "<95%"
@@ -66,8 +72,8 @@ export default function GameScene() {
     let cardsAtCenterCount = 0;
 
     const tw = gsap.to(`.${styles.card}`, {
-      y: () => document.documentElement.clientHeight / 2 + 123 / 2,
-      x: () => document.documentElement.clientWidth / 2 - 79 / 2,
+      y: () => document.documentElement.clientHeight / 2 + cardHeight / 2,
+      x: () => document.documentElement.clientWidth / 2 - cardWidth / 2,
       zIndex: -5,
       duration: 1.5,
       stagger: {
@@ -92,16 +98,17 @@ export default function GameScene() {
           el.classList.remove(styles.card);
           el.classList.add(styles["card-static-center"]);
           gsap.set(el, { opacity: 1, x: 0, y: 0 });
-          setStartDistribution(true);
         });
+
+        setStartDistribution(true);
       },
     });
 
     tw.progress(1);
-  }, []);
+  }, [cardWidth, cardHeight]);
 
   useEffect(() => {
-    if (!startDistribution) {
+    if (!startDistribution || !cardWidth || !cardHeight) {
       return;
     }
 
@@ -140,7 +147,7 @@ export default function GameScene() {
           childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
         })`,
         {
-          y: () => document.documentElement.clientHeight / 2 - 123 / 2,
+          y: () => document.documentElement.clientHeight / 2 - cardHeight / 2,
         },
         tlPosition
       );
@@ -164,29 +171,33 @@ export default function GameScene() {
         PLAYER_COUNT * CARDS_PER_PLAYER + 1
       })`,
       {
-        x: () => -document.documentElement.clientWidth / 2 + 79 / 2,
-        y: () => -document.documentElement.clientHeight / 2 + 123 / 2,
+        x: () => -document.documentElement.clientWidth / 2 + cardWidth / 2,
+        y: () => -document.documentElement.clientHeight / 2 + cardHeight / 2,
         duration: 1,
         ease: "none",
       }
     );
 
     tl.progress(1);
-  }, [startDistribution]);
+  }, [startDistribution, cardHeight, cardWidth]);
 
   return (
     <>
-      {cards.map((_, i) => (
-        // TODO: extract card component
-        <div className={`${styles.card}`} key={i}>
-          <Image
-            src="/images/cards/card-back.png"
-            width={79}
-            height={123}
-            alt="card-back"
-          />
-        </div>
-      ))}
+      <div>
+        {cardWidth &&
+          cardHeight &&
+          cards.map((_, i) => (
+            // TODO: extract card component
+            <div className={`${styles.card}`} key={i}>
+              <Image
+                src="/images/cards/card-back.png"
+                width={cardWidth}
+                height={cardHeight}
+                alt="card-back"
+              />
+            </div>
+          ))}
+      </div>
     </>
   );
 }
