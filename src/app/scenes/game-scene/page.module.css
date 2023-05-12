@@ -13,6 +13,54 @@
   left: calc(50% - var(--card-width) / 2);
 }
 
+.card-left {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% - var(--card-height) / 2);
+  left: calc(-1 * var(--card-width) / 2);
+}
+
+.card-right {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% - var(--card-height) / 2);
+  left: calc(100% - var(--card-width) / 2);
+}
+
+.card-top {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(-1 * var(--card-height) / 2);
+  left: calc(50% - var(--card-width) / 2);
+}
+
+.card-bottom {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(100% - var(--card-height));
+  left: calc(50% - var(--card-width) / 2);
+}
+
+.card-top-left {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.card-top-left-trump {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: 0;
+  left: calc((var(--card-height) - var(--card-width)) / 2);
+}
+
 .skip-button {
   position: absolute;
   bottom: 2rem;

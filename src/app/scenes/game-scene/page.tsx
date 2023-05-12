@@ -13,6 +13,7 @@ import {
   getImageSrc,
   makeShuffledDeck,
 } from "../../../utils/card";
+import assert from "assert";
 
 gsap.registerPlugin(Flip);
 
@@ -26,7 +27,7 @@ export default function GameScene() {
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(false); // TODO: set to true
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
@@ -120,7 +121,6 @@ export default function GameScene() {
     setTweens((prev) => [...prev, tw]);
   }, [cardWidth, cardHeight]);
 
-  // TODO: make this responsive (cards are at fixed positions after an animation ends)
   useEffect(() => {
     if (!startDistribution || !cardWidth || !cardHeight) {
       return;
@@ -128,7 +128,7 @@ export default function GameScene() {
 
     const tl = gsap.timeline({
       defaults: {
-        duration: 0.7,
+        duration: 0.9,
         ease: "back.out(0.7)",
       },
       onComplete: () => {
@@ -136,7 +136,7 @@ export default function GameScene() {
       },
     });
 
-    const tlPosition = "<55%";
+    const tlPosition = "<35%";
 
     const animate = (childIdx: number) => {
       if (childIdx > PLAYER_COUNT * CARDS_PER_PLAYER) {
@@ -147,6 +147,15 @@ export default function GameScene() {
         `.${styles["card-static-center"]}:nth-child(${childIdx})`,
         {
           y: () => -document.documentElement.clientHeight / 2,
+          onComplete: () => {
+            const el = document.querySelector(
+              `.${styles["card-static-center"]}:nth-child(${childIdx})`
+            );
+            assert(el);
+            el.classList.remove(`${styles["card-static-center"]}`);
+            el.classList.add(`${styles["card-top"]}`);
+            gsap.set(el, { x: 0, y: 0 });
+          },
         },
         tlPosition
       );
@@ -155,6 +164,15 @@ export default function GameScene() {
           `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`,
           {
             x: () => document.documentElement.clientWidth / 2,
+            onComplete: () => {
+              const el = document.querySelector(
+                `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`
+              );
+              assert(el);
+              el.classList.remove(`${styles["card-static-center"]}`);
+              el.classList.add(`${styles["card-right"]}`);
+              gsap.set(el, { x: 0, y: 0 });
+            },
           },
           tlPosition
         );
@@ -165,6 +183,17 @@ export default function GameScene() {
         })`,
         {
           y: () => document.documentElement.clientHeight / 2 - cardHeight / 2,
+          onComplete: () => {
+            const el = document.querySelector(
+              `.${styles["card-static-center"]}:nth-child(${
+                childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
+              })`
+            );
+            assert(el);
+            el.classList.remove(`${styles["card-static-center"]}`);
+            el.classList.add(`${styles["card-bottom"]}`);
+            gsap.set(el, { x: 0, y: 0 });
+          },
         },
         tlPosition
       );
@@ -173,6 +202,15 @@ export default function GameScene() {
           `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`,
           {
             x: () => -document.documentElement.clientWidth / 2,
+            onComplete: () => {
+              const el = document.querySelector(
+                `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`
+              );
+              assert(el);
+              el.classList.remove(`${styles["card-static-center"]}`);
+              el.classList.add(`${styles["card-left"]}`);
+              gsap.set(el, { x: 0, y: 0 });
+            },
           },
           tlPosition
         );
@@ -193,7 +231,6 @@ export default function GameScene() {
       }
     );
 
-    // TODO: remove duplication between two tweens below
     tl.to(
       `.${styles["card-static-center"]}:nth-child(${
         PLAYER_COUNT * CARDS_PER_PLAYER + 1
@@ -219,6 +256,29 @@ export default function GameScene() {
         y: () => -document.documentElement.clientHeight / 2 + cardHeight / 2,
         duration: 1,
         ease: "none",
+        onComplete: () => {
+          const els = document.querySelectorAll(
+            `.${styles["card-static-center"]}:nth-child(n+${
+              PLAYER_COUNT * CARDS_PER_PLAYER + 1
+            })`
+          );
+          assert(els);
+          els.forEach((el, i) => {
+            el.classList.remove(`${styles["card-static-center"]}`);
+            el.classList.add(
+              `${
+                i === 0
+                  ? styles["card-top-left-trump"]
+                  : styles["card-top-left"]
+              }`
+            );
+            gsap.set(el, { x: 0, y: 0 });
+          });
+
+          gsap.set(`.${styles["card-left"]},.${styles["card-right"]}`, {
+            rotateZ: 90,
+          });
+        },
       },
       "<0%"
     );
