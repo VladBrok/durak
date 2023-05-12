@@ -23,12 +23,12 @@ export class Card {
     return this.isTrump(this, trump);
   }
 
-  hash(): string {
-    return `${this.suit}_${this.rank}`;
+  equals(that: Card): boolean {
+    return this.suit === that.suit && this.rank === that.rank;
   }
 
   toString(): string {
-    return this.hash();
+    return this.suit + "_" + this.rank;
   }
 
   private isTrump(card: Card, trump: Card): boolean {
