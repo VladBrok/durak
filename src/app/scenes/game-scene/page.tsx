@@ -4,22 +4,26 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/all";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCssVarValue } from "../../../utils/getCssVarValue";
 import TextButton from "../../../components/text-button/text-button";
+import { Deck } from "../../../utils/deck";
+import { CARD_COUNT, Card } from "../../../utils/card";
+import { getRandomInteger } from "../../../utils/random-integer";
 
 gsap.registerPlugin(Flip);
 
-const CARD_COUNT = 80;
+const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
 const PLAYER_COUNT = 4;
 const CARDS_PER_PLAYER = 6;
+const DECK = new Deck();
 
 export default function GameScene() {
-  const [cards, setCards] = useState(Array(CARD_COUNT).fill(null));
+  const [trump, setTrump] = useState<null | Card>(null);
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true);
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
@@ -87,7 +91,7 @@ export default function GameScene() {
         onComplete: () => {
           cardsAtCenterCount++;
 
-          if (CARD_COUNT - cardsAtCenterCount < 20) {
+          if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 20) {
             return;
           }
 
@@ -189,6 +193,9 @@ export default function GameScene() {
     );
 
     setTweens((prev) => [...prev, tl]);
+    setTrump(
+      [...DECK][getRandomInteger(PLAYER_COUNT * CARDS_PER_PLAYER, CARD_COUNT)]
+    );
   }, [startDistribution, cardHeight, cardWidth]);
 
   useEffect(() => {
@@ -205,14 +212,22 @@ export default function GameScene() {
     setShowSkipAnimationButton(false);
   }
 
+  const cards = useMemo(
+    () =>
+      startDistribution
+        ? [...DECK]
+        : [...DECK, ...Array(CARD_COUNT_FOR_ANIMATION - CARD_COUNT).fill(null)],
+    [startDistribution]
+  );
+
   return (
     <>
       <div>
         {cardWidth &&
           cardHeight &&
-          cards.map((_, i) => (
+          cards.map((card, i) => (
             // TODO: extract card component
-            <div className={`${styles.card}`} key={i}>
+            <div className={`${styles.card}`} key={card?.hash() || i}>
               <Image
                 src="/images/cards/card-back.png"
                 width={cardWidth}
