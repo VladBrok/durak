@@ -7,18 +7,22 @@ import { Flip } from "gsap/all";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCssVarValue } from "../../../utils/getCssVarValue";
 import TextButton from "../../../components/text-button/text-button";
-import { Deck } from "../../../utils/deck";
-import { CARD_COUNT, Card } from "../../../utils/card";
+import {
+  CARD_COUNT,
+  Card,
+  getImageSrc,
+  makeShuffledDeck,
+} from "../../../utils/card";
 
 gsap.registerPlugin(Flip);
 
 const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
 const PLAYER_COUNT = 4;
 const CARDS_PER_PLAYER = 6;
-const DECK = new Deck();
+const DECK = makeShuffledDeck();
 
 export default function GameScene() {
-  const [trump, setTrump] = useState<null | Card>(null);
+  const [cards, setCards] = useState<Card[]>(DECK);
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
@@ -220,7 +224,13 @@ export default function GameScene() {
     );
 
     setTweens((prev) => [...prev, tl]);
-    setTrump([...DECK][PLAYER_COUNT * CARDS_PER_PLAYER]);
+    setCards((prev) =>
+      prev.map((card, i) =>
+        i === PLAYER_COUNT * CARDS_PER_PLAYER
+          ? { ...card, isTrump: true, isFaceUp: true }
+          : card
+      )
+    );
   }, [startDistribution, cardHeight, cardWidth]);
 
   useEffect(() => {
@@ -237,26 +247,27 @@ export default function GameScene() {
     setShowSkipAnimationButton(false);
   }
 
-  const cards = useMemo<(Card | null)[]>(
+  const cardsToShow = useMemo<(Card | null)[]>(
     () =>
       startDistribution
-        ? [...DECK]
-        : [...DECK, ...Array(CARD_COUNT_FOR_ANIMATION - CARD_COUNT).fill(null)],
-    [startDistribution]
+        ? cards
+        : [
+            ...cards,
+            ...Array(CARD_COUNT_FOR_ANIMATION - CARD_COUNT).fill(null),
+          ],
+    [cards, startDistribution]
   );
-
-  console.log(trump);
 
   return (
     <>
       <div>
         {cardWidth &&
           cardHeight &&
-          cards.map((card, i) => (
+          cardsToShow.map((card, i) => (
             // TODO: extract card component
-            <div className={`${styles.card}`} key={card?.toString() || i}>
+            <div className={`${styles.card}`} key={i}>
               <Image
-                src="/images/cards/card-back.png"
+                src={card ? getImageSrc(card) : "/images/cards/card-back.png"}
                 width={cardWidth}
                 height={cardHeight}
                 alt="card-back"

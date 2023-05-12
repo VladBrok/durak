@@ -1,3 +1,6 @@
+import assert from "assert";
+import { shuffle } from "./shuffle";
+
 export const Suits = ["DIAMONDS", "CLUBS", "HEARTS", "SPADES"] as const;
 export type Suit = (typeof Suits)[number];
 
@@ -6,32 +9,48 @@ export type Rank = (typeof Ranks)[number];
 
 export const CARD_COUNT = Suits.length * Ranks.length;
 
-export class Card {
-  private readonly suit: Suit;
-  private readonly rank: Rank;
+export interface Card {
+  suit: Suit;
+  rank: Rank;
+  isFaceUp: boolean;
+  isTrump: boolean;
+}
 
-  constructor(suit: Suit, rank: Rank) {
-    this.suit = suit;
-    this.rank = rank;
+export function beats(a: Card, b: Card): boolean {
+  if (a.suit === b.suit) {
+    return a.rank > b.rank;
   }
 
-  beats(that: Card, trump: Card): boolean {
-    if (this.suit === that.suit) {
-      return this.rank > that.rank;
+  return a.isTrump;
+}
+
+export function getImageSrc(card: Card): string {
+  if (!card.isFaceUp) {
+    return "/images/cards/card-back.png";
+  }
+
+  return `/images/cards/${card.suit.toLowerCase()}-${card.rank}.png`;
+}
+
+export function makeShuffledDeck(): Card[] {
+  const cards: (Card | null)[] = Array(CARD_COUNT).fill(null);
+  let cardIdx = 0;
+
+  for (let i = 0; i < Suits.length; i++) {
+    for (let j = 0; j < Ranks.length; j++) {
+      cards[cardIdx++] = {
+        suit: Suits[i],
+        rank: Ranks[j],
+        isFaceUp: false,
+        isTrump: false,
+      };
     }
-
-    return this.isTrump(this, trump);
   }
 
-  equals(that: Card): boolean {
-    return this.suit === that.suit && this.rank === that.rank;
-  }
+  shuffle(cards);
 
-  toString(): string {
-    return this.suit + "_" + this.rank;
-  }
-
-  private isTrump(card: Card, trump: Card): boolean {
-    return card.suit === trump.suit;
-  }
+  return cards.map((card) => {
+    assert(card !== null);
+    return card;
+  });
 }
