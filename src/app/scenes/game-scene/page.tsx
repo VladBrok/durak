@@ -27,7 +27,7 @@ export default function GameScene() {
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(false); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
