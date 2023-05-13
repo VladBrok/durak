@@ -10,11 +10,13 @@ import TextButton from "../../../components/text-button/text-button";
 import {
   CARD_COUNT,
   Card,
+  cardComparator,
   getImageSrc,
   makeShuffledDeck,
 } from "../../../utils/card";
 import assert from "assert";
 import { getCardIndexesForPlayer } from "../../../utils/get-card-indexes-for-player";
+import { flushSync } from "react-dom";
 
 interface IPlayer {
   isUser: boolean;
@@ -47,6 +49,59 @@ export default function GameScene() {
   const [players, setPlayers] = useState<IPlayer[]>(PLAYERS);
   const startedAnimation = useRef(false);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  function sortCards(): void {
+    const bottomCards = cardRefs.current.filter((_, i) =>
+      players.find((pl) => pl.isUser)?.cards.some((idx) => idx === i)
+    );
+    sort(bottomCards, "x");
+
+    const topCards = cardRefs.current.filter((_, i) =>
+      players[0].cards.some((idx) => idx === i)
+    );
+    sort(topCards, "x");
+
+    if (PLAYER_COUNT < 3) {
+      return;
+    }
+
+    const rightCards = cardRefs.current.filter((_, i) =>
+      players[1].cards.some((idx) => idx === i)
+    );
+    sort(rightCards, "y");
+
+    if (PLAYER_COUNT < 4) {
+      return;
+    }
+
+    const leftCards = cardRefs.current.filter((_, i) =>
+      players[3].cards.some((idx) => idx === i)
+    );
+    sort(leftCards, "y");
+
+    function sort(
+      refs: (HTMLDivElement | null)[],
+      translationDir: "x" | "y"
+    ): void {
+      refs
+        .sort((a, b) =>
+          cardComparator(
+            cards[cardRefs.current.findIndex((ref) => ref === a)],
+            cards[cardRefs.current.findIndex((ref) => ref === b)]
+          )
+        )
+        .forEach((card, i) => {
+          const translation =
+            (i - Math.floor(refs.length / 2)) * (cardWidth / 3);
+          gsap.set(card, { zIndex: i });
+          const tl = gsap.timeline();
+          tl.to(card, { [translationDir]: 0 });
+          tl.to(card, {
+            [translationDir]: translation,
+          });
+        });
+    }
+  }
 
   useEffect(() => {
     setCardWidth(getCssVarValue("--card-width"));
@@ -301,6 +356,8 @@ export default function GameScene() {
                 : card
             )
           );
+
+          sortCards();
         },
       },
       "<0%"
