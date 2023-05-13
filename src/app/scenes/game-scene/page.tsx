@@ -25,7 +25,7 @@ import {
 } from "../../../utils/config";
 import { useCardSize } from "../../../hooks/use-card-size";
 
-// TODO: extract some animations to utils/animations/
+// TODO: extract some animations to hooks/animations/
 // TODO: compute some values (player cards) to simplify code
 
 gsap.registerPlugin(Flip);
