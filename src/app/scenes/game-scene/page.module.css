@@ -61,6 +61,54 @@
   left: calc((var(--card-height) - var(--card-width)) / 2);
 }
 
+.card-attack-first {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% - var(--card-height) - var(--attack-card-gap) / 2);
+  left: calc(50% - var(--card-width) * 1.5 - var(--attack-card-gap));
+}
+
+.card-attack-second {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% - var(--card-height) - var(--attack-card-gap) / 2);
+  left: calc(50% - var(--card-width) * 0.5);
+}
+
+.card-attack-third {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% - var(--card-height) - var(--attack-card-gap) / 2);
+  left: calc(50% + var(--card-width) * 0.5 + var(--attack-card-gap));
+}
+
+.card-attack-fourth {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% + var(--attack-card-gap) / 2);
+  left: calc(50% - var(--card-width) * 1.5 - var(--attack-card-gap));
+}
+
+.card-attack-fifth {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% + var(--attack-card-gap) / 2);
+  left: calc(50% - var(--card-width) * 0.5);
+}
+
+.card-attack-sixth {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(50% + var(--attack-card-gap) / 2);
+  left: calc(50% + var(--card-width) * 0.5 + var(--attack-card-gap));
+}
+
 .skip-button {
   position: absolute;
   bottom: 2rem;

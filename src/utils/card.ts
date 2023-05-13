@@ -62,3 +62,9 @@ export function cardComparator(a: Card, b: Card): number {
 
   return a.rank - b.rank;
 }
+
+export function canAttackWith(card: Card, attackCards: Card[]): boolean {
+  return (
+    !attackCards.length || attackCards.some((item) => item.rank === card.rank)
+  );
+}

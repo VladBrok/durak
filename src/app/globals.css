@@ -1,6 +1,7 @@
 :root {
   --card-width: 79px;
   --card-height: 123px;
+  --attack-card-gap: calc(var(--card-width) / 1.5);
 }
 
 @media (prefers-color-scheme: dark) {

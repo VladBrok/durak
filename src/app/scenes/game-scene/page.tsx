@@ -10,6 +10,7 @@ import TextButton from "../../../components/text-button/text-button";
 import {
   CARD_COUNT,
   Card,
+  canAttackWith,
   cardComparator,
   getImageSrc,
   makeShuffledDeck,
@@ -52,6 +53,8 @@ export default function GameScene() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
+  const [attackCards, setAttackCards] = useState<number[]>([]);
+  const [defendCards, setDefendCards] = useState<number[]>([]);
 
   const canMoveCards = selectedCardIdx !== null;
   const userPlayer = players.find((pl) => pl.isUser)!;
@@ -442,12 +445,78 @@ export default function GameScene() {
     selectedCardIdx: number | null
   ) {
     return (e: KeyboardEvent) => {
-      if (!canMoveCards || selectedCardIdx === null) {
+      if (
+        !canMoveCards ||
+        selectedCardIdx === null ||
+        selectedCardIdx < 0 ||
+        attackCards.length > 5
+      ) {
         return;
       }
 
       switch (e.key) {
         case "ArrowUp":
+          if (
+            !canAttackWith(
+              cards[userPlayer.cards[selectedCardIdx]],
+              attackCards.map((x) => cards[x])
+            )
+          ) {
+            return;
+          }
+
+          const el = cardRefs.current[userPlayer.cards[selectedCardIdx]];
+
+          assert(el);
+
+          const state = Flip.getState(el);
+
+          el.classList.remove(styles["card-bottom"]);
+          el.classList.add(
+            styles[
+              attackCards.length === 0
+                ? "card-attack-first"
+                : attackCards.length === 1
+                ? "card-attack-second"
+                : attackCards.length === 2
+                ? "card-attack-third"
+                : attackCards.length === 3
+                ? "card-attack-fourth"
+                : attackCards.length === 4
+                ? "card-attack-fifth"
+                : "card-attack-sixth"
+            ]
+          );
+          gsap.set(el, {
+            x: 0,
+            y: 0,
+            yPercent: 0,
+          });
+
+          Flip.from(state, {
+            duration: 1,
+          });
+
+          setPlayers((prev) =>
+            prev.map((player) =>
+              player === userPlayer
+                ? {
+                    ...player,
+                    cards: player.cards.filter((_, i) => i !== selectedCardIdx),
+                  }
+                : player
+            )
+          );
+
+          setAttackCards((prev) => [
+            ...prev,
+            userPlayer.cards[selectedCardIdx],
+          ]);
+
+          setSelectedCardIdx(
+            Math.min(selectedCardIdx, userPlayer.cards.length - 2)
+          );
+
           setShowHelp(false);
           break;
         case "ArrowDown":
@@ -472,13 +541,14 @@ export default function GameScene() {
     };
   }
 
+  // TODO: refactor (handleKeydown depends on userPlayer and other, which is not obvious)
   useEffect(() => {
     const handler = handleKeydown(canMoveCards, selectedCardIdx);
 
     document.addEventListener("keydown", handler);
 
     return () => document.removeEventListener("keydown", handler);
-  }, [canMoveCards, selectedCardIdx, userPlayer]);
+  }, [canMoveCards, selectedCardIdx, userPlayer, attackCards]);
 
   function skipAnimation(): void {
     setShowSkipAnimationButton(false);
