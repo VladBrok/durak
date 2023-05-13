@@ -109,12 +109,6 @@
   left: calc(50% + var(--card-width) * 0.5 + var(--attack-card-gap));
 }
 
-.skip-button {
-  position: absolute;
-  bottom: 2rem;
-  right: 3.5rem;
-}
-
 .help {
   position: absolute;
   top: 50%;
