@@ -616,13 +616,13 @@ export default function GameScene() {
 
   const cardsToShow = useMemo<(Card | null)[]>(
     () =>
-      startDistribution
+      !showSkipAnimationButton
         ? cards
         : [
             ...cards,
             ...Array(CARD_COUNT_FOR_ANIMATION - CARD_COUNT).fill(null),
           ],
-    [cards, startDistribution]
+    [cards, showSkipAnimationButton]
   );
 
   return (
