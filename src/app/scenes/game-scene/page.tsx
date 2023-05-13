@@ -33,7 +33,6 @@ gsap.registerPlugin(Flip);
 export default function GameScene() {
   const [cardWidth, cardHeight] = useCardSize();
   const [cards, setCards] = useState<Card[]>(DECK);
-  const [startDistribution, setStartDistribution] = useState(false);
   const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
@@ -205,194 +204,193 @@ export default function GameScene() {
           gsap.set(el, { opacity: 1, x: 0, y: 0 });
         });
 
-        setStartDistribution(true);
+        const tl = gsap.timeline({
+          defaults: {
+            duration: 0.9,
+            ease: "back.out(0.7)",
+          },
+          onComplete: () => {
+            setShowSkipAnimationButton(false);
+          },
+        });
+
+        const tlPosition = "<35%";
+
+        const animate = (childIdx: number) => {
+          if (childIdx > PLAYER_COUNT * CARDS_PER_PLAYER) {
+            return;
+          }
+
+          tl.to(
+            `.${styles["card-static-center"]}:nth-child(${childIdx})`,
+            {
+              y: () => -document.documentElement.clientHeight / 2,
+              onComplete: () => {
+                const el = document.querySelector(
+                  `.${styles["card-static-center"]}:nth-child(${childIdx})`
+                );
+                assert(el);
+                el.classList.remove(`${styles["card-static-center"]}`);
+                el.classList.add(`${styles["card-top"]}`);
+                gsap.set(el, { x: 0, y: 0 });
+              },
+            },
+            tlPosition
+          );
+          if (PLAYER_COUNT > 2) {
+            tl.to(
+              `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`,
+              {
+                x: () => document.documentElement.clientWidth / 2,
+                onComplete: () => {
+                  const el = document.querySelector(
+                    `.${styles["card-static-center"]}:nth-child(${
+                      childIdx + 1
+                    })`
+                  );
+                  assert(el);
+                  el.classList.remove(`${styles["card-static-center"]}`);
+                  el.classList.add(`${styles["card-right"]}`);
+                  gsap.set(el, { x: 0, y: 0 });
+                },
+              },
+              tlPosition
+            );
+          }
+          tl.to(
+            `.${styles["card-static-center"]}:nth-child(${
+              childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
+            })`,
+            {
+              y: () =>
+                document.documentElement.clientHeight / 2 - cardHeight / 2,
+              onComplete: () => {
+                const el = document.querySelector(
+                  `.${styles["card-static-center"]}:nth-child(${
+                    childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
+                  })`
+                );
+                assert(el);
+                el.classList.remove(`${styles["card-static-center"]}`);
+                el.classList.add(`${styles["card-bottom"]}`);
+                gsap.set(el, { x: 0, y: 0 });
+              },
+            },
+            tlPosition
+          );
+          if (PLAYER_COUNT > 3) {
+            tl.to(
+              `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`,
+              {
+                x: () => -document.documentElement.clientWidth / 2,
+                onComplete: () => {
+                  const el = document.querySelector(
+                    `.${styles["card-static-center"]}:nth-child(${
+                      childIdx + 3
+                    })`
+                  );
+                  assert(el);
+                  el.classList.remove(`${styles["card-static-center"]}`);
+                  el.classList.add(`${styles["card-left"]}`);
+                  gsap.set(el, { x: 0, y: 0 });
+                },
+              },
+              tlPosition
+            );
+          }
+
+          animate(childIdx + PLAYER_COUNT);
+        };
+
+        animate(1);
+
+        tl.set(
+          `.${styles["card-static-center"]}:nth-child(${
+            PLAYER_COUNT * CARDS_PER_PLAYER + 1
+          })`,
+          {
+            x: () => (cardHeight - cardWidth) / 2,
+            rotateZ: 90,
+          }
+        );
+
+        tl.to(
+          `.${styles["card-static-center"]}:nth-child(${
+            PLAYER_COUNT * CARDS_PER_PLAYER + 1
+          })`,
+          {
+            x: () =>
+              -document.documentElement.clientWidth / 2 +
+              cardWidth / 2 +
+              (cardHeight - cardWidth) / 2,
+            y: () =>
+              -document.documentElement.clientHeight / 2 + cardHeight / 2,
+            duration: 1,
+            delay: 0.5,
+            ease: "none",
+          }
+        );
+
+        tl.to(
+          `.${styles["card-static-center"]}:nth-child(n+${
+            PLAYER_COUNT * CARDS_PER_PLAYER + 2
+          })`,
+          {
+            x: () => -document.documentElement.clientWidth / 2 + cardWidth / 2,
+            y: () =>
+              -document.documentElement.clientHeight / 2 + cardHeight / 2,
+            duration: 1,
+            ease: "none",
+            onComplete: () => {
+              const els = document.querySelectorAll(
+                `.${styles["card-static-center"]}:nth-child(n+${
+                  PLAYER_COUNT * CARDS_PER_PLAYER + 1
+                })`
+              );
+              assert(els);
+              els.forEach((el, i) => {
+                el.classList.remove(`${styles["card-static-center"]}`);
+                el.classList.add(
+                  `${
+                    i === 0
+                      ? styles["card-top-left-trump"]
+                      : styles["card-top-left"]
+                  }`
+                );
+                gsap.set(el, { x: 0, y: 0 });
+              });
+
+              gsap.set(`.${styles["card-left"]},.${styles["card-right"]}`, {
+                rotateZ: 90,
+              });
+
+              setCards((prev) =>
+                prev.map((card, i) =>
+                  userPlayer.cardIndexes.some((idx) => i === idx)
+                    ? { ...card, isFaceUp: true }
+                    : card
+                )
+              );
+
+              sortCards();
+            },
+          },
+          "<0%"
+        );
+
+        setTweens((prev) => [...prev, tl]);
+        setCards((prev) =>
+          prev.map((card, i) =>
+            i === PLAYER_COUNT * CARDS_PER_PLAYER
+              ? { ...card, isTrump: true, isFaceUp: true }
+              : card
+          )
+        );
       },
     });
 
     setTweens((prev) => [...prev, tw]);
   }, [cardWidth, cardHeight]);
-
-  useEffect(() => {
-    if (!startDistribution || !cardWidth || !cardHeight) {
-      return;
-    }
-
-    const tl = gsap.timeline({
-      defaults: {
-        duration: 0.9,
-        ease: "back.out(0.7)",
-      },
-      onComplete: () => {
-        setShowSkipAnimationButton(false);
-      },
-    });
-
-    const tlPosition = "<35%";
-
-    const animate = (childIdx: number) => {
-      if (childIdx > PLAYER_COUNT * CARDS_PER_PLAYER) {
-        return;
-      }
-
-      tl.to(
-        `.${styles["card-static-center"]}:nth-child(${childIdx})`,
-        {
-          y: () => -document.documentElement.clientHeight / 2,
-          onComplete: () => {
-            const el = document.querySelector(
-              `.${styles["card-static-center"]}:nth-child(${childIdx})`
-            );
-            assert(el);
-            el.classList.remove(`${styles["card-static-center"]}`);
-            el.classList.add(`${styles["card-top"]}`);
-            gsap.set(el, { x: 0, y: 0 });
-          },
-        },
-        tlPosition
-      );
-      if (PLAYER_COUNT > 2) {
-        tl.to(
-          `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`,
-          {
-            x: () => document.documentElement.clientWidth / 2,
-            onComplete: () => {
-              const el = document.querySelector(
-                `.${styles["card-static-center"]}:nth-child(${childIdx + 1})`
-              );
-              assert(el);
-              el.classList.remove(`${styles["card-static-center"]}`);
-              el.classList.add(`${styles["card-right"]}`);
-              gsap.set(el, { x: 0, y: 0 });
-            },
-          },
-          tlPosition
-        );
-      }
-      tl.to(
-        `.${styles["card-static-center"]}:nth-child(${
-          childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
-        })`,
-        {
-          y: () => document.documentElement.clientHeight / 2 - cardHeight / 2,
-          onComplete: () => {
-            const el = document.querySelector(
-              `.${styles["card-static-center"]}:nth-child(${
-                childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
-              })`
-            );
-            assert(el);
-            el.classList.remove(`${styles["card-static-center"]}`);
-            el.classList.add(`${styles["card-bottom"]}`);
-            gsap.set(el, { x: 0, y: 0 });
-          },
-        },
-        tlPosition
-      );
-      if (PLAYER_COUNT > 3) {
-        tl.to(
-          `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`,
-          {
-            x: () => -document.documentElement.clientWidth / 2,
-            onComplete: () => {
-              const el = document.querySelector(
-                `.${styles["card-static-center"]}:nth-child(${childIdx + 3})`
-              );
-              assert(el);
-              el.classList.remove(`${styles["card-static-center"]}`);
-              el.classList.add(`${styles["card-left"]}`);
-              gsap.set(el, { x: 0, y: 0 });
-            },
-          },
-          tlPosition
-        );
-      }
-
-      animate(childIdx + PLAYER_COUNT);
-    };
-
-    animate(1);
-
-    tl.set(
-      `.${styles["card-static-center"]}:nth-child(${
-        PLAYER_COUNT * CARDS_PER_PLAYER + 1
-      })`,
-      {
-        x: () => (cardHeight - cardWidth) / 2,
-        rotateZ: 90,
-      }
-    );
-
-    tl.to(
-      `.${styles["card-static-center"]}:nth-child(${
-        PLAYER_COUNT * CARDS_PER_PLAYER + 1
-      })`,
-      {
-        x: () =>
-          -document.documentElement.clientWidth / 2 +
-          cardWidth / 2 +
-          (cardHeight - cardWidth) / 2,
-        y: () => -document.documentElement.clientHeight / 2 + cardHeight / 2,
-        duration: 1,
-        delay: 0.5,
-        ease: "none",
-      }
-    );
-
-    tl.to(
-      `.${styles["card-static-center"]}:nth-child(n+${
-        PLAYER_COUNT * CARDS_PER_PLAYER + 2
-      })`,
-      {
-        x: () => -document.documentElement.clientWidth / 2 + cardWidth / 2,
-        y: () => -document.documentElement.clientHeight / 2 + cardHeight / 2,
-        duration: 1,
-        ease: "none",
-        onComplete: () => {
-          const els = document.querySelectorAll(
-            `.${styles["card-static-center"]}:nth-child(n+${
-              PLAYER_COUNT * CARDS_PER_PLAYER + 1
-            })`
-          );
-          assert(els);
-          els.forEach((el, i) => {
-            el.classList.remove(`${styles["card-static-center"]}`);
-            el.classList.add(
-              `${
-                i === 0
-                  ? styles["card-top-left-trump"]
-                  : styles["card-top-left"]
-              }`
-            );
-            gsap.set(el, { x: 0, y: 0 });
-          });
-
-          gsap.set(`.${styles["card-left"]},.${styles["card-right"]}`, {
-            rotateZ: 90,
-          });
-
-          setCards((prev) =>
-            prev.map((card, i) =>
-              userPlayer.cardIndexes.some((idx) => i === idx)
-                ? { ...card, isFaceUp: true }
-                : card
-            )
-          );
-
-          sortCards();
-        },
-      },
-      "<0%"
-    );
-
-    setTweens((prev) => [...prev, tl]);
-    setCards((prev) =>
-      prev.map((card, i) =>
-        i === PLAYER_COUNT * CARDS_PER_PLAYER
-          ? { ...card, isTrump: true, isFaceUp: true }
-          : card
-      )
-    );
-  }, [startDistribution, cardHeight, cardWidth]);
 
   useEffect(() => {
     if (showSkipAnimationButton) {
