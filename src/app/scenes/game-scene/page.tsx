@@ -23,6 +23,8 @@ interface IPlayer {
   cards: number[];
 }
 
+// TODO: extract some animations to utils/animations/
+
 gsap.registerPlugin(Flip);
 
 const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
@@ -42,24 +44,29 @@ export default function GameScene() {
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(false); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
   const [players, setPlayers] = useState<IPlayer[]>(PLAYERS);
   const startedAnimation = useRef(false);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
+  const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
+
+  const canMoveCards = selectedCardIdx !== null;
+  const userPlayer = players.find((pl) => pl.isUser)!;
 
   function sortCards(): void {
     const bottomCards = cardRefs.current.filter((_, i) =>
-      players.find((pl) => pl.isUser)?.cards.some((idx) => idx === i)
+      userPlayer.cards.some((idx) => idx === i)
     );
-    sort(bottomCards, "x");
+    sort(bottomCards, "x", userPlayer);
 
     const topCards = cardRefs.current.filter((_, i) =>
       players[0].cards.some((idx) => idx === i)
     );
-    sort(topCards, "x");
+    sort(topCards, "x", players[0]);
 
     if (PLAYER_COUNT < 3) {
       return;
@@ -68,7 +75,7 @@ export default function GameScene() {
     const rightCards = cardRefs.current.filter((_, i) =>
       players[1].cards.some((idx) => idx === i)
     );
-    sort(rightCards, "y");
+    sort(rightCards, "y", players[1]);
 
     if (PLAYER_COUNT < 4) {
       return;
@@ -77,12 +84,26 @@ export default function GameScene() {
     const leftCards = cardRefs.current.filter((_, i) =>
       players[3].cards.some((idx) => idx === i)
     );
-    sort(leftCards, "y");
+    sort(leftCards, "y", players[3]);
 
     function sort(
       refs: (HTMLDivElement | null)[],
-      translationDir: "x" | "y"
+      translationDir: "x" | "y",
+      player: IPlayer
     ): void {
+      setPlayers((prev) =>
+        prev.map((item) =>
+          item === player
+            ? {
+                ...item,
+                cards: item.cards
+                  .slice()
+                  .sort((a, b) => cardComparator(cards[a], cards[b])),
+              }
+            : item
+        )
+      );
+
       refs
         .sort((a, b) =>
           cardComparator(
@@ -93,11 +114,20 @@ export default function GameScene() {
         .forEach((card, i) => {
           const translation =
             (i - Math.floor(refs.length / 2)) * (cardWidth / 3);
+
           gsap.set(card, { zIndex: i });
-          const tl = gsap.timeline();
+
+          const tl = gsap.timeline({ defaults: { duration: 0.7 } });
           tl.to(card, { [translationDir]: 0 });
           tl.to(card, {
             [translationDir]: translation,
+            ...(refs === bottomCards &&
+              i === refs.length - 1 && {
+                onComplete: () => {
+                  setShowHelp(true);
+                  setSelectedCardIdx(0);
+                },
+              }),
           });
         });
     }
@@ -351,7 +381,7 @@ export default function GameScene() {
 
           setCards((prev) =>
             prev.map((card, i) =>
-              players.find((p) => p.isUser)?.cards.some((idx) => i === idx)
+              userPlayer.cards.some((idx) => i === idx)
                 ? { ...card, isFaceUp: true }
                 : card
             )
@@ -382,6 +412,71 @@ export default function GameScene() {
       tween.progress(1);
     });
   }, [tweens, showSkipAnimationButton]);
+
+  useEffect(() => {
+    if (!cardRefs.current.length) {
+      return;
+    }
+
+    gsap.set(
+      userPlayer.cards
+        .filter((_, i) => i !== selectedCardIdx)
+        .map((card) => cardRefs.current[card]),
+      {
+        yPercent: 0,
+      }
+    );
+
+    if (selectedCardIdx === null) {
+      return;
+    }
+
+    const refIdx = userPlayer.cards[selectedCardIdx];
+
+    gsap.set(cardRefs.current[refIdx], {
+      yPercent: -50,
+    });
+  }, [selectedCardIdx, userPlayer]);
+
+  function handleKeyup(canMoveCards: boolean, selectedCardIdx: number | null) {
+    return (e: KeyboardEvent) => {
+      if (!canMoveCards || selectedCardIdx === null) {
+        return;
+      }
+
+      switch (e.key) {
+        case "ArrowUp":
+          setShowHelp(false);
+          break;
+        case "ArrowDown":
+          setShowHelp(false);
+          break;
+        case "ArrowLeft": {
+          const nextIdx =
+            selectedCardIdx <= 0
+              ? userPlayer.cards.length - 1
+              : selectedCardIdx - 1;
+          setSelectedCardIdx(nextIdx);
+          break;
+        }
+        case "ArrowRight": {
+          const nextIdx = (selectedCardIdx + 1) % userPlayer.cards.length;
+          setSelectedCardIdx(nextIdx);
+          break;
+        }
+        default:
+          break;
+      }
+    };
+  }
+
+  useEffect(() => {
+    const handler = handleKeyup(canMoveCards, selectedCardIdx);
+
+    document.addEventListener("keyup", handler);
+
+    return () => document.removeEventListener("keyup", handler);
+  }, [canMoveCards, selectedCardIdx, userPlayer]);
 
   function skipAnimation(): void {
     setShowSkipAnimationButton(false);
@@ -419,6 +514,19 @@ export default function GameScene() {
             </div>
           ))}
       </div>
+
+      {showHelp && (
+        <div className={styles.help}>
+          <div className={styles.instruction}>Up arrow - attack</div>
+          <div className={styles.instruction}>Down arrow - pass</div>
+          <div className={styles.instruction}>
+            Left arrow - select left card
+          </div>
+          <div className={styles.instruction}>
+            Right arrow - select right card
+          </div>
+        </div>
+      )}
 
       {showSkipAnimationButton && (
         <div className={styles["skip-button"]}>

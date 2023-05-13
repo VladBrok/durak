@@ -66,3 +66,12 @@
   bottom: 2rem;
   right: 3.5rem;
 }
+
+.help {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.7rem;
+}
