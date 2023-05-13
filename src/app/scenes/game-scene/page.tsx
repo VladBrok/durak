@@ -5,7 +5,6 @@ import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/all";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getCssVarValue } from "../../../utils/get-css-var-value";
 import TextButton from "../../../components/text-button/text-button";
 import {
   CARD_COUNT,
@@ -14,38 +13,27 @@ import {
   canAttackWith,
   cardComparator,
   getImageSrc,
-  makeShuffledDeck,
 } from "../../../utils/card";
 import assert from "assert";
-import { getCardIndexesForPlayer } from "../../../utils/get-card-indexes-for-player";
-
-interface IPlayer {
-  isUser: boolean;
-  cards: number[];
-}
+import {
+  CARDS_PER_PLAYER,
+  CARD_COUNT_FOR_ANIMATION,
+  DECK,
+  IPlayer,
+  PLAYERS,
+  PLAYER_COUNT,
+} from "../../../utils/config";
+import { useCardSize } from "../../../hooks/use-card-size";
 
 // TODO: extract some animations to utils/animations/
 
 gsap.registerPlugin(Flip);
 
-const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
-const PLAYER_COUNT = 4;
-const CARDS_PER_PLAYER = 6;
-const DECK = makeShuffledDeck();
-const PLAYERS = Array(PLAYER_COUNT)
-  .fill(null)
-  .map((_, i) => ({
-    cards: getCardIndexesForPlayer(i, PLAYER_COUNT, CARDS_PER_PLAYER),
-    isUser: (PLAYER_COUNT > 2 && i === 2) || (PLAYER_COUNT <= 2 && i === 1),
-  }));
-assert(PLAYERS.filter((player) => player.isUser).length === 1);
-
 export default function GameScene() {
+  const [cardWidth, cardHeight] = useCardSize();
   const [cards, setCards] = useState<Card[]>(DECK);
   const [startDistribution, setStartDistribution] = useState(false);
-  const [cardWidth, setCardWidth] = useState(0);
-  const [cardHeight, setCardHeight] = useState(0);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(false); // TODO: set to true
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
@@ -66,12 +54,12 @@ export default function GameScene() {
 
   function sortCards(): void {
     const bottomCards = cardRefs.current.filter((_, i) =>
-      userPlayer.cards.some((idx) => idx === i)
+      userPlayer.cardIndexes.some((idx) => idx === i)
     );
     sort(bottomCards, "x", userPlayer);
 
     const topCards = cardRefs.current.filter((_, i) =>
-      players[0].cards.some((idx) => idx === i)
+      players[0].cardIndexes.some((idx) => idx === i)
     );
     sort(topCards, "x", players[0]);
 
@@ -80,7 +68,7 @@ export default function GameScene() {
     }
 
     const rightCards = cardRefs.current.filter((_, i) =>
-      players[1].cards.some((idx) => idx === i)
+      players[1].cardIndexes.some((idx) => idx === i)
     );
     sort(rightCards, "y", players[1]);
 
@@ -89,7 +77,7 @@ export default function GameScene() {
     }
 
     const leftCards = cardRefs.current.filter((_, i) =>
-      players[3].cards.some((idx) => idx === i)
+      players[3].cardIndexes.some((idx) => idx === i)
     );
     sort(leftCards, "y", players[3]);
 
@@ -103,7 +91,7 @@ export default function GameScene() {
           item === player
             ? {
                 ...item,
-                cards: item.cards
+                cardIndexes: item.cardIndexes
                   .slice()
                   .sort((a, b) => cardComparator(cards[a], cards[b])),
               }
@@ -139,11 +127,6 @@ export default function GameScene() {
         });
     }
   }
-
-  useEffect(() => {
-    setCardWidth(getCssVarValue("--card-width"));
-    setCardHeight(getCssVarValue("--card-height"));
-  }, []);
 
   useEffect(() => {
     if (startedAnimation.current || !cardWidth || !cardHeight) {
@@ -388,7 +371,7 @@ export default function GameScene() {
 
           setCards((prev) =>
             prev.map((card, i) =>
-              userPlayer.cards.some((idx) => i === idx)
+              userPlayer.cardIndexes.some((idx) => i === idx)
                 ? { ...card, isFaceUp: true }
                 : card
             )
@@ -426,7 +409,7 @@ export default function GameScene() {
     }
 
     gsap.set(
-      userPlayer.cards
+      userPlayer.cardIndexes
         .filter((_, i) => i !== selectedCardIdx)
         .map((card) => cardRefs.current[card]),
       {
@@ -438,7 +421,7 @@ export default function GameScene() {
       return;
     }
 
-    const refIdx = userPlayer.cards[selectedCardIdx];
+    const refIdx = userPlayer.cardIndexes[selectedCardIdx];
 
     gsap.set(cardRefs.current[refIdx], {
       yPercent: -50,
@@ -463,14 +446,14 @@ export default function GameScene() {
         case "ArrowUp":
           if (
             !canAttackWith(
-              cards[userPlayer.cards[selectedCardIdx]],
+              cards[userPlayer.cardIndexes[selectedCardIdx]],
               attackCards.map((x) => cards[x])
             )
           ) {
             return;
           }
 
-          const el = cardRefs.current[userPlayer.cards[selectedCardIdx]];
+          const el = cardRefs.current[userPlayer.cardIndexes[selectedCardIdx]];
 
           assert(el);
 
@@ -507,7 +490,9 @@ export default function GameScene() {
               player === userPlayer
                 ? {
                     ...player,
-                    cards: player.cards.filter((_, i) => i !== selectedCardIdx),
+                    cardIndexes: player.cardIndexes.filter(
+                      (_, i) => i !== selectedCardIdx
+                    ),
                   }
                 : player
             )
@@ -515,11 +500,11 @@ export default function GameScene() {
 
           setAttackCards((prev) => [
             ...prev,
-            userPlayer.cards[selectedCardIdx],
+            userPlayer.cardIndexes[selectedCardIdx],
           ]);
 
           setSelectedCardIdx(
-            Math.min(selectedCardIdx, userPlayer.cards.length - 2)
+            Math.min(selectedCardIdx, userPlayer.cardIndexes.length - 2)
           );
 
           setShowHelp(false);
@@ -532,13 +517,13 @@ export default function GameScene() {
         case "ArrowLeft": {
           const nextIdx =
             selectedCardIdx <= 0
-              ? userPlayer.cards.length - 1
+              ? userPlayer.cardIndexes.length - 1
               : selectedCardIdx - 1;
           setSelectedCardIdx(nextIdx);
           break;
         }
         case "ArrowRight": {
-          const nextIdx = (selectedCardIdx + 1) % userPlayer.cards.length;
+          const nextIdx = (selectedCardIdx + 1) % userPlayer.cardIndexes.length;
           setSelectedCardIdx(nextIdx);
           break;
         }
@@ -565,7 +550,7 @@ export default function GameScene() {
 
   useEffect(() => {
     if (activePlayerIdx === defendingPlayerIdx) {
-      const defendCard = players[defendingPlayerIdx].cards.find((idx) =>
+      const defendCard = players[defendingPlayerIdx].cardIndexes.find((idx) =>
         beats(cards[idx], cards[attackCards[defendCards.length]])
       );
 
@@ -593,7 +578,9 @@ export default function GameScene() {
             player === players[defendingPlayerIdx]
               ? {
                   ...player,
-                  cards: player.cards.filter((card) => card !== defendCard),
+                  cardIndexes: player.cardIndexes.filter(
+                    (card) => card !== defendCard
+                  ),
                 }
               : player
           )
@@ -625,10 +612,6 @@ export default function GameScene() {
     // attackCards,
     // cardWidth,
   ]);
-
-  function skipAnimation(): void {
-    setShowSkipAnimationButton(false);
-  }
 
   const cardsToShow = useMemo<(Card | null)[]>(
     () =>
@@ -678,7 +661,10 @@ export default function GameScene() {
 
       {showSkipAnimationButton && (
         <div className={styles["skip-button"]}>
-          <TextButton onClick={skipAnimation} text="Skip" />
+          <TextButton
+            onClick={() => setShowSkipAnimationButton(false)}
+            text="Skip"
+          />
         </div>
       )}
     </>
