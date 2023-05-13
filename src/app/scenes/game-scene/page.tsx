@@ -5,7 +5,7 @@ import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/all";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getCssVarValue } from "../../../utils/getCssVarValue";
+import { getCssVarValue } from "../../../utils/get-css-var-value";
 import TextButton from "../../../components/text-button/text-button";
 import {
   CARD_COUNT,
@@ -14,6 +14,12 @@ import {
   makeShuffledDeck,
 } from "../../../utils/card";
 import assert from "assert";
+import { getCardIndexesForPlayer } from "../../../utils/get-card-indexes-for-player";
+
+interface IPlayer {
+  isUser: boolean;
+  cards: number[];
+}
 
 gsap.registerPlugin(Flip);
 
@@ -21,17 +27,26 @@ const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
 const PLAYER_COUNT = 4;
 const CARDS_PER_PLAYER = 6;
 const DECK = makeShuffledDeck();
+const PLAYERS = Array(PLAYER_COUNT)
+  .fill(null)
+  .map((_, i) => ({
+    cards: getCardIndexesForPlayer(i, PLAYER_COUNT, CARDS_PER_PLAYER),
+    isUser: (PLAYER_COUNT > 2 && i === 2) || (PLAYER_COUNT <= 2 && i === 1),
+  }));
+assert(PLAYERS.filter((player) => player.isUser).length === 1);
 
 export default function GameScene() {
   const [cards, setCards] = useState<Card[]>(DECK);
   const [startDistribution, setStartDistribution] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardHeight, setCardHeight] = useState(0);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(false); // TODO: set to true
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
+  const [players, setPlayers] = useState<IPlayer[]>(PLAYERS);
   const startedAnimation = useRef(false);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     setCardWidth(getCssVarValue("--card-width"));
@@ -278,6 +293,14 @@ export default function GameScene() {
           gsap.set(`.${styles["card-left"]},.${styles["card-right"]}`, {
             rotateZ: 90,
           });
+
+          setCards((prev) =>
+            prev.map((card, i) =>
+              players.find((p) => p.isUser)?.cards.some((idx) => i === idx)
+                ? { ...card, isFaceUp: true }
+                : card
+            )
+          );
         },
       },
       "<0%"
@@ -325,7 +348,11 @@ export default function GameScene() {
           cardHeight &&
           cardsToShow.map((card, i) => (
             // TODO: extract card component
-            <div className={`${styles.card}`} key={i}>
+            <div
+              className={`${styles.card}`}
+              key={i}
+              ref={(el) => i < CARD_COUNT && (cardRefs.current[i] = el)}
+            >
               <Image
                 src={card ? getImageSrc(card) : "/images/cards/card-back.png"}
                 width={cardWidth}
