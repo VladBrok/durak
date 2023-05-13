@@ -54,3 +54,11 @@ export function makeShuffledDeck(): Card[] {
     return card;
   });
 }
+
+export function cardComparator(a: Card, b: Card): number {
+  if (a.rank === b.rank) {
+    return a.suit > b.suit ? 1 : a.suit < b.suit ? -1 : 0;
+  }
+
+  return a.rank - b.rank;
+}
