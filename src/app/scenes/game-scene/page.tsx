@@ -16,7 +16,6 @@ import {
 } from "../../../utils/card";
 import assert from "assert";
 import { getCardIndexesForPlayer } from "../../../utils/get-card-indexes-for-player";
-import { flushSync } from "react-dom";
 
 interface IPlayer {
   isUser: boolean;
@@ -438,7 +437,10 @@ export default function GameScene() {
     });
   }, [selectedCardIdx, userPlayer]);
 
-  function handleKeyup(canMoveCards: boolean, selectedCardIdx: number | null) {
+  function handleKeydown(
+    canMoveCards: boolean,
+    selectedCardIdx: number | null
+  ) {
     return (e: KeyboardEvent) => {
       if (!canMoveCards || selectedCardIdx === null) {
         return;
@@ -471,11 +473,11 @@ export default function GameScene() {
   }
 
   useEffect(() => {
-    const handler = handleKeyup(canMoveCards, selectedCardIdx);
+    const handler = handleKeydown(canMoveCards, selectedCardIdx);
 
-    document.addEventListener("keyup", handler);
+    document.addEventListener("keydown", handler);
 
-    return () => document.removeEventListener("keyup", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, [canMoveCards, selectedCardIdx, userPlayer]);
 
   function skipAnimation(): void {
