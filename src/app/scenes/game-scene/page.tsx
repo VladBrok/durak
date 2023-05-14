@@ -4,7 +4,7 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/all";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CARD_COUNT,
   Card,
@@ -36,14 +36,15 @@ export default function GameScene() {
   const [players, setPlayers] = useState<IPlayer[]>(PLAYERS);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [showHelp, setShowHelp] = useState(false);
+  const [attackCardIndexes, setAttackCardIndexes] = useState<number[]>([]);
+  const [defendCardIndexes, setDefendCardIndexes] = useState<number[]>([]);
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
-  const [attackCards, setAttackCards] = useState<number[]>([]);
-  const [defendCards, setDefendCards] = useState<number[]>([]);
   const [defendingPlayerIdx, setDefendingPlayerIdx] = useState(0);
   const [activePlayerIdx, setActivePlayerIdx] = useState(
     PLAYER_COUNT > 2 ? 2 : 1
   );
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const prevActivePlayerIdx = useRef<null | number>(null);
 
   const canMoveCards = selectedCardIdx !== null;
   const userPlayer = players.find((pl) => pl.isUser)!;
@@ -104,8 +105,9 @@ export default function GameScene() {
             ...(!isGameStarted &&
               i === refs.length - 1 && {
                 onComplete: () => {
-                  setShowHelp(true);
-                  setSelectedCardIdx(0);
+                  setActivePlayerIdx(1);
+                  // setShowHelp(true);
+                  // setSelectedCardIdx(0);
                   setIsGameStarted(true);
                 },
               }),
@@ -136,6 +138,7 @@ export default function GameScene() {
     );
   }
 
+  // Select card
   useEffect(() => {
     if (!cardRefs.current.length) {
       return;
@@ -161,70 +164,188 @@ export default function GameScene() {
     });
   }, [selectedCardIdx, userPlayer]);
 
-  function handleKeydown(
-    canMoveCards: boolean,
-    selectedCardIdx: number | null
-  ) {
+  const attack = useCallback(
+    (onSuccess?: () => void): boolean => {
+      assert(activePlayerIdx !== defendingPlayerIdx);
+
+      const player = players[activePlayerIdx];
+      let cardIdx = 0;
+
+      if (player === userPlayer) {
+        assert(selectedCardIdx !== null);
+        cardIdx = userPlayer.cardIndexes[selectedCardIdx];
+      } else {
+        const idx = player.cardIndexes.find((idx) =>
+          canAttackWith(
+            cards[idx],
+            attackCardIndexes.map((x) => cards[x]),
+            defendCardIndexes.map((x) => cards[x])
+          )
+        );
+
+        if (idx == null) {
+          console.log("cannot attack");
+          return false;
+        }
+
+        cardIdx = idx;
+      }
+
+      if (
+        !canAttackWith(
+          cards[cardIdx],
+          attackCardIndexes.map((x) => cards[x]),
+          defendCardIndexes.map((x) => cards[x])
+        )
+      ) {
+        return false;
+      }
+
+      const cardRef = cardRefs.current[cardIdx];
+
+      assert(cardRef);
+
+      setCards((prev) =>
+        prev.map((item) =>
+          item === prev[cardIdx] ? { ...item, isFaceUp: true } : item
+        )
+      );
+
+      gsap.set(cardRef, { rotateZ: 0 });
+
+      const state = Flip.getState(cardRef);
+
+      cardRef.classList.remove(styles["card-bottom"]);
+      cardRef.classList.add(styles[`card-attack-${attackCardIndexes.length}`]);
+      gsap.set(cardRef, {
+        x: 0,
+        y: 0,
+        yPercent: 0,
+      });
+
+      Flip.from(state, {
+        duration: 1,
+        onComplete: () => {
+          onSuccess?.();
+        },
+      });
+
+      setPlayers((prev) =>
+        prev.map((pl) => {
+          return pl === player
+            ? {
+                ...pl,
+                cardIndexes: pl.cardIndexes.filter((x) => x !== cardIdx),
+              }
+            : pl;
+        })
+      );
+
+      setAttackCardIndexes((prev) => [...prev, cardIdx]);
+
+      return true;
+    },
+    [
+      activePlayerIdx,
+      cards,
+      players,
+      userPlayer,
+      attackCardIndexes,
+      defendCardIndexes,
+      selectedCardIdx,
+      defendingPlayerIdx,
+    ]
+  );
+
+  const defend = useCallback(
+    (onSuccess?: () => void): boolean => {
+      assert(defendingPlayerIdx === activePlayerIdx);
+
+      const defendCardIdx = players[defendingPlayerIdx].cardIndexes.find(
+        (idx) =>
+          beats(cards[idx], cards[attackCardIndexes[defendCardIndexes.length]])
+      );
+
+      if (!defendCardIdx) {
+        console.log("lost");
+        return false;
+      }
+
+      const cardRef = cardRefs.current[defendCardIdx];
+
+      assert(cardRef);
+
+      gsap.set(cardRef, { rotateZ: 0 });
+
+      const state = Flip.getState(cardRef);
+
+      cardRef.classList.remove(styles["card-top"]);
+      cardRef.classList.add(styles[`card-attack-${defendCardIndexes.length}`]);
+      gsap.set(cardRef, {
+        x: cardWidth / 3,
+        y: cardWidth / 3,
+        yPercent: 0,
+      });
+
+      Flip.from(state, {
+        duration: 1,
+        onComplete: () => {
+          onSuccess?.();
+        },
+      });
+
+      setPlayers((prev) =>
+        prev.map((player) =>
+          player === players[defendingPlayerIdx]
+            ? {
+                ...player,
+                cardIndexes: player.cardIndexes.filter(
+                  (card) => card !== defendCardIdx
+                ),
+              }
+            : player
+        )
+      );
+
+      setCards((prev) =>
+        prev.map((card, i) =>
+          i === defendCardIdx ? { ...card, isFaceUp: true } : card
+        )
+      );
+
+      setDefendCardIndexes((prev) => [...prev, defendCardIdx]);
+
+      return true;
+    },
+    [
+      cards,
+      cardWidth,
+      defendCardIndexes,
+      attackCardIndexes,
+      defendingPlayerIdx,
+      players,
+      activePlayerIdx,
+    ]
+  );
+
+  const handleKeydown = useCallback(() => {
     return (e: KeyboardEvent) => {
       if (
         !canMoveCards ||
         selectedCardIdx === null ||
         selectedCardIdx < 0 ||
-        attackCards.length > 5
+        attackCardIndexes.length > 5
       ) {
         return;
       }
 
       switch (e.key) {
         case "ArrowUp":
-          if (
-            !canAttackWith(
-              cards[userPlayer.cardIndexes[selectedCardIdx]],
-              attackCards.map((x) => cards[x])
-            )
-          ) {
-            return;
+          if (attack()) {
+            setSelectedCardIdx(
+              Math.min(selectedCardIdx, userPlayer.cardIndexes.length - 2)
+            );
           }
-
-          const el = cardRefs.current[userPlayer.cardIndexes[selectedCardIdx]];
-
-          assert(el);
-
-          const state = Flip.getState(el);
-
-          el.classList.remove(styles["card-bottom"]);
-          el.classList.add(styles[`card-attack-${attackCards.length}`]);
-          gsap.set(el, {
-            x: 0,
-            y: 0,
-            yPercent: 0,
-          });
-
-          Flip.from(state, {
-            duration: 1,
-          });
-
-          setPlayers((prev) =>
-            prev.map((player) =>
-              player === userPlayer
-                ? {
-                    ...player,
-                    cardIndexes: player.cardIndexes.filter(
-                      (_, i) => i !== selectedCardIdx
-                    ),
-                  }
-                : player
-            )
-          );
-
-          setAttackCards((prev) => [
-            ...prev,
-            userPlayer.cardIndexes[selectedCardIdx],
-          ]);
-
-          setSelectedCardIdx(
-            Math.min(selectedCardIdx, userPlayer.cardIndexes.length - 2)
-          );
 
           setShowHelp(false);
           break;
@@ -250,86 +371,55 @@ export default function GameScene() {
           break;
       }
     };
-  }
+  }, [
+    attack,
+    canMoveCards,
+    attackCardIndexes,
+    selectedCardIdx,
+    defendingPlayerIdx,
+    userPlayer,
+  ]);
 
-  // TODO: refactor (handleKeydown depends on userPlayer and other, which is not obvious)
   useEffect(() => {
-    const handler = handleKeydown(canMoveCards, selectedCardIdx);
+    const handler = handleKeydown();
 
     document.addEventListener("keydown", handler);
 
     return () => document.removeEventListener("keydown", handler);
-  }, [
-    canMoveCards,
-    selectedCardIdx,
-    userPlayer,
-    attackCards,
-    defendingPlayerIdx,
-  ]);
+  }, [handleKeydown]);
 
+  // Bot attack/defence
   useEffect(() => {
-    if (activePlayerIdx === defendingPlayerIdx) {
-      const defendCard = players[defendingPlayerIdx].cardIndexes.find((idx) =>
-        beats(cards[idx], cards[attackCards[defendCards.length]])
-      );
+    if (
+      !isGameStarted ||
+      prevActivePlayerIdx.current === activePlayerIdx ||
+      players[activePlayerIdx] === userPlayer
+    ) {
+      return;
+    }
 
-      if (defendCard) {
-        const el = cardRefs.current[defendCard];
+    const prevIdx = prevActivePlayerIdx.current;
 
-        assert(el);
+    prevActivePlayerIdx.current = activePlayerIdx;
 
-        const state = Flip.getState(el);
-
-        el.classList.remove(styles["card-top"]);
-        el.classList.add(styles["card-attack-0"]);
-        gsap.set(el, {
-          x: cardWidth / 3,
-          y: cardWidth / 3,
-          yPercent: 0,
-        });
-
-        Flip.from(state, {
-          duration: 1,
-        });
-
-        setPlayers((prev) =>
-          prev.map((player) =>
-            player === players[defendingPlayerIdx]
-              ? {
-                  ...player,
-                  cardIndexes: player.cardIndexes.filter(
-                    (card) => card !== defendCard
-                  ),
-                }
-              : player
-          )
-        );
-
-        setCards((prev) =>
-          prev.map((card, i) =>
-            i === defendCard ? { ...card, isFaceUp: true } : card
-          )
-        );
-
-        setDefendCards((prev) => [...prev, defendCard]);
-
-        if (defendCards.length + 1 === attackCards.length) {
-          setSelectedCardIdx(0);
-        }
-      } else {
-        console.log("lost");
-        setSelectedCardIdx(0);
-      }
+    if (players[activePlayerIdx] === players[defendingPlayerIdx]) {
+      defend(() => {
+        assert(prevIdx !== null);
+        setActivePlayerIdx(prevIdx);
+      });
+    } else {
+      attack(() => {
+        setActivePlayerIdx(defendingPlayerIdx);
+      });
     }
   }, [
     activePlayerIdx,
-    // defendCards,
-    // defendingPlayerIdx,
-    // players,
-    // cards,
-    // defendCards,
-    // attackCards,
-    // cardWidth,
+    attack,
+    isGameStarted,
+    userPlayer,
+    players,
+    defendingPlayerIdx,
+    defend,
   ]);
 
   const cardsToShow = useMemo<(Card | null)[]>(

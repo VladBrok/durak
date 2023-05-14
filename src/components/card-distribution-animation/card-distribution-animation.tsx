@@ -24,7 +24,7 @@ export default function CardDistributionAnimation(
   const [tweens, setTweens] = useState<
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
-  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(true); // TODO: set to true
+  const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(false); // TODO: set to true
 
   const startedAnimation = useRef(false);
 
