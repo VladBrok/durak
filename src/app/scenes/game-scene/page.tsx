@@ -48,34 +48,23 @@ export default function GameScene() {
   const canMoveCards = selectedCardIdx !== null;
   const userPlayer = players.find((pl) => pl.isUser)!;
 
+  function cardRefsOf(player: IPlayer): (HTMLDivElement | null)[] {
+    return cardRefs.current.filter((_, i) =>
+      player.cardIndexes.some((idx) => idx === i)
+    );
+  }
+
   function sortCards(): void {
-    const bottomCards = cardRefs.current.filter((_, i) =>
-      userPlayer.cardIndexes.some((idx) => idx === i)
-    );
-    sort(bottomCards, "x", userPlayer);
+    sort(cardRefsOf(userPlayer), "x", userPlayer);
+    sort(cardRefsOf(players[0]), "x", players[0]);
 
-    const topCards = cardRefs.current.filter((_, i) =>
-      players[0].cardIndexes.some((idx) => idx === i)
-    );
-    sort(topCards, "x", players[0]);
-
-    if (PLAYER_COUNT < 3) {
-      return;
+    if (PLAYER_COUNT > 2) {
+      sort(cardRefsOf(players[1]), "y", players[1]);
     }
 
-    const rightCards = cardRefs.current.filter((_, i) =>
-      players[1].cardIndexes.some((idx) => idx === i)
-    );
-    sort(rightCards, "y", players[1]);
-
-    if (PLAYER_COUNT < 4) {
-      return;
+    if (PLAYER_COUNT > 3) {
+      sort(cardRefsOf(players[3]), "y", players[3]);
     }
-
-    const leftCards = cardRefs.current.filter((_, i) =>
-      players[3].cardIndexes.some((idx) => idx === i)
-    );
-    sort(leftCards, "y", players[3]);
 
     function sort(
       refs: (HTMLDivElement | null)[],
@@ -112,7 +101,7 @@ export default function GameScene() {
           tl.to(card, { [translationDir]: 0 });
           tl.to(card, {
             [translationDir]: translation,
-            ...(refs === bottomCards &&
+            ...(!isGameStarted &&
               i === refs.length - 1 && {
                 onComplete: () => {
                   setShowHelp(true);
@@ -292,7 +281,7 @@ export default function GameScene() {
         const state = Flip.getState(el);
 
         el.classList.remove(styles["card-top"]);
-        el.classList.add(styles["card-attack-first"]);
+        el.classList.add(styles["card-attack-0"]);
         gsap.set(el, {
           x: cardWidth / 3,
           y: cardWidth / 3,
