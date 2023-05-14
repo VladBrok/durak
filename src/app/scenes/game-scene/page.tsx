@@ -105,9 +105,9 @@ export default function GameScene() {
             ...(!isGameStarted &&
               i === refs.length - 1 && {
                 onComplete: () => {
-                  setActivePlayerIdx(1);
-                  // setShowHelp(true);
-                  // setSelectedCardIdx(0);
+                  setActivePlayerIdx(2);
+                  setShowHelp(true);
+                  setSelectedCardIdx(0);
                   setIsGameStarted(true);
                 },
               }),
@@ -261,59 +261,84 @@ export default function GameScene() {
     (onSuccess?: () => void): boolean => {
       assert(defendingPlayerIdx === activePlayerIdx);
 
-      const defendCardIdx = players[defendingPlayerIdx].cardIndexes.find(
-        (idx) =>
-          beats(cards[idx], cards[attackCardIndexes[defendCardIndexes.length]])
-      );
+      const cardIndexes = players[defendingPlayerIdx].cardIndexes
+        .slice()
+        .sort((a, b) => cardComparator(cards[a], cards[b]));
+      const curDefendCardIndexes: number[] = [];
 
-      if (!defendCardIdx) {
-        console.log("lost");
-        return false;
+      for (
+        let i = defendCardIndexes.length;
+        i < attackCardIndexes.length;
+        i++
+      ) {
+        const cardThatBeats = cardIndexes.findIndex((idx) =>
+          beats(cards[idx], cards[attackCardIndexes[i]])
+        );
+
+        if (cardThatBeats < 0) {
+          console.log("lost");
+          return false;
+        }
+
+        curDefendCardIndexes.push(cardIndexes[cardThatBeats]);
+        cardIndexes.splice(cardThatBeats, 1);
       }
 
-      const cardRef = cardRefs.current[defendCardIdx];
-
-      assert(cardRef);
-
-      gsap.set(cardRef, { rotateZ: 0 });
-
-      const state = Flip.getState(cardRef);
-
-      cardRef.classList.remove(styles["card-top"]);
-      cardRef.classList.add(styles[`card-attack-${defendCardIndexes.length}`]);
-      gsap.set(cardRef, {
-        x: cardWidth / 3,
-        y: cardWidth / 3,
-        yPercent: 0,
-      });
-
-      Flip.from(state, {
-        duration: 1,
-        onComplete: () => {
-          onSuccess?.();
-        },
-      });
-
-      setPlayers((prev) =>
-        prev.map((player) =>
-          player === players[defendingPlayerIdx]
-            ? {
-                ...player,
-                cardIndexes: player.cardIndexes.filter(
-                  (card) => card !== defendCardIdx
-                ),
-              }
-            : player
-        )
+      assert(
+        curDefendCardIndexes.length ===
+          attackCardIndexes.length - defendCardIndexes.length
       );
 
-      setCards((prev) =>
-        prev.map((card, i) =>
-          i === defendCardIdx ? { ...card, isFaceUp: true } : card
-        )
-      );
+      for (let i = 0; i < curDefendCardIndexes.length; i++) {
+        const defendCardIdx = curDefendCardIndexes[i];
+        const cardRef = cardRefs.current[defendCardIdx];
 
-      setDefendCardIndexes((prev) => [...prev, defendCardIdx]);
+        assert(cardRef);
+
+        gsap.set(cardRef, { rotateZ: 0, zIndex: 10 });
+
+        const state = Flip.getState(cardRef);
+
+        cardRef.classList.remove(styles["card-top"]);
+        cardRef.classList.add(
+          styles[`card-attack-${defendCardIndexes.length + i}`]
+        );
+        gsap.set(cardRef, {
+          x: cardWidth / 3,
+          y: cardWidth / 3,
+          yPercent: 0,
+        });
+
+        Flip.from(state, {
+          duration: 1,
+          onComplete: () => {
+            if (defendCardIdx === curDefendCardIndexes.at(-1)) {
+              onSuccess?.();
+            }
+          },
+        });
+
+        setPlayers((prev) =>
+          prev.map((player) =>
+            player === players[defendingPlayerIdx]
+              ? {
+                  ...player,
+                  cardIndexes: player.cardIndexes.filter(
+                    (card) => card !== defendCardIdx
+                  ),
+                }
+              : player
+          )
+        );
+
+        setCards((prev) =>
+          prev.map((card, i) =>
+            i === defendCardIdx ? { ...card, isFaceUp: true } : card
+          )
+        );
+
+        setDefendCardIndexes((prev) => [...prev, defendCardIdx]);
+      }
 
       return true;
     },
@@ -351,6 +376,7 @@ export default function GameScene() {
           break;
         case "ArrowDown":
           setSelectedCardIdx(null);
+          prevActivePlayerIdx.current = activePlayerIdx;
           setActivePlayerIdx(defendingPlayerIdx);
           setShowHelp(false);
           break;
@@ -378,6 +404,7 @@ export default function GameScene() {
     selectedCardIdx,
     defendingPlayerIdx,
     userPlayer,
+    activePlayerIdx,
   ]);
 
   useEffect(() => {
@@ -406,6 +433,10 @@ export default function GameScene() {
       defend(() => {
         assert(prevIdx !== null);
         setActivePlayerIdx(prevIdx);
+
+        if (players[prevIdx] === userPlayer) {
+          setSelectedCardIdx(0);
+        }
       });
     } else {
       attack(() => {
