@@ -110,11 +110,10 @@ export default function GameScene() {
             ...(!isGameStarted &&
               i === refs.length - 1 && {
                 onComplete: () => {
-                  setActivePlayerIdx(1);
-                  setAttackingPlayerIdx(1);
-                  setDefendingPlayerIdx(2);
+                  setActivePlayerIdx(2);
+                  setAttackingPlayerIdx(2);
+                  setDefendingPlayerIdx(0);
                   setShowHelp(true);
-                  // setSelectedCardIdx(0);
                   setIsGameStarted(true);
                 },
               }),
@@ -466,12 +465,7 @@ export default function GameScene() {
 
   const handleKeydown = useCallback(() => {
     return (e: KeyboardEvent) => {
-      if (
-        !canMoveCards ||
-        selectedCardIdx === null ||
-        selectedCardIdx < 0 ||
-        attackCardIndexes.length > 5
-      ) {
+      if (!canMoveCards || selectedCardIdx === null || selectedCardIdx < 0) {
         return;
       }
 
@@ -499,9 +493,15 @@ export default function GameScene() {
           setShowHelp(false);
           break;
         case "ArrowDown":
-          setSelectedCardIdx(null);
-          prevActivePlayerIdx.current = activePlayerIdx;
-          setActivePlayerIdx(defendingPlayerIdx);
+          if (attackCardIndexes.length !== defendCardIndexes.length) {
+            setSelectedCardIdx(null);
+            prevActivePlayerIdx.current = activePlayerIdx;
+            setActivePlayerIdx(defendingPlayerIdx);
+          } else {
+            handleAttackFail();
+            setSelectedCardIdx(null);
+          }
+
           setShowHelp(false);
           break;
         case "ArrowLeft": {
@@ -522,15 +522,16 @@ export default function GameScene() {
       }
     };
   }, [
-    attack,
     canMoveCards,
-    attackCardIndexes,
     selectedCardIdx,
-    defendingPlayerIdx,
-    userPlayer,
     activePlayerIdx,
+    defendingPlayerIdx,
     defend,
-    defendCardIndexes,
+    attack,
+    attackCardIndexes.length,
+    defendCardIndexes.length,
+    userPlayer.cardIndexes.length,
+    handleAttackFail,
   ]);
 
   useEffect(() => {
