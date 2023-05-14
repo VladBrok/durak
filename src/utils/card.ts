@@ -9,14 +9,14 @@ export type Rank = (typeof Ranks)[number];
 
 export const CARD_COUNT = Suits.length * Ranks.length;
 
-export interface Card {
+export interface ICard {
   suit: Suit;
   rank: Rank;
   isFaceUp: boolean;
   isTrump: boolean;
 }
 
-export function beats(a: Card, b: Card): boolean {
+export function beats(a: ICard, b: ICard): boolean {
   if (a.suit === b.suit) {
     return a.rank > b.rank;
   }
@@ -24,7 +24,7 @@ export function beats(a: Card, b: Card): boolean {
   return a.isTrump;
 }
 
-export function getImageSrc(card: Card): string {
+export function getImageSrc(card: ICard): string {
   if (!card.isFaceUp) {
     return "/images/cards/card-back.png";
   }
@@ -32,8 +32,8 @@ export function getImageSrc(card: Card): string {
   return `/images/cards/${card.suit.toLowerCase()}-${card.rank}.png`;
 }
 
-export function makeShuffledDeck(): Card[] {
-  const cards: (Card | null)[] = Array(CARD_COUNT).fill(null);
+export function makeShuffledDeck(): ICard[] {
+  const cards: (ICard | null)[] = Array(CARD_COUNT).fill(null);
   let cardIdx = 0;
 
   for (let i = 0; i < Suits.length; i++) {
@@ -55,7 +55,7 @@ export function makeShuffledDeck(): Card[] {
   });
 }
 
-export function cardComparator(a: Card, b: Card): number {
+export function cardComparator(a: ICard, b: ICard): number {
   if (a.rank === b.rank) {
     return a.suit > b.suit ? 1 : a.suit < b.suit ? -1 : 0;
   }
@@ -64,9 +64,9 @@ export function cardComparator(a: Card, b: Card): number {
 }
 
 export function canAttackWith(
-  card: Card,
-  attackCards: Card[],
-  defendCards: Card[]
+  card: ICard,
+  attackCards: ICard[],
+  defendCards: ICard[]
 ): boolean {
   return (
     !attackCards.length ||

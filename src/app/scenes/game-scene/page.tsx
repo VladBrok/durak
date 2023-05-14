@@ -7,7 +7,7 @@ import { Flip } from "gsap/all";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CARD_COUNT,
-  Card,
+  ICard,
   beats,
   canAttackWith,
   cardComparator,
@@ -25,6 +25,7 @@ import {
 } from "../../../utils/config";
 import { useCardSize } from "../../../hooks/use-card-size";
 import CardDistributionAnimation from "../../../components/card-distribution-animation/card-distribution-animation";
+import { useCardSort } from "../../../hooks/use-card-sort";
 
 // TODO: extract some animations to hooks/animations/
 // TODO: compute some values (player cards) to simplify code
@@ -33,7 +34,7 @@ gsap.registerPlugin(Flip);
 
 export default function GameScene() {
   const [cardWidth, cardHeight] = useCardSize();
-  const [cards, setCards] = useState<Card[]>(DECK);
+  const [cards, setCards] = useState<ICard[]>(DECK);
   const [players, setPlayers] = useState<IPlayer[]>(PLAYERS);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [showHelp, setShowHelp] = useState(false);
@@ -54,74 +55,21 @@ export default function GameScene() {
   const canMoveCards = selectedCardIdx !== null;
   const userPlayer = players.find((pl) => pl.isUser)!;
 
-  const sortCards = useCallback((): void => {
-    const bottomPlayerIdx = PLAYER_COUNT > 2 ? 2 : 1;
-    sort(cardRefsOf(players[bottomPlayerIdx]), "x", players[bottomPlayerIdx]);
-    sort(cardRefsOf(players[0]), "x", players[0]);
+  const sortCards = useCardSort(
+    players,
+    setPlayers,
+    isGameStarted,
+    () => {
+      setActivePlayerIdx(2);
+      setAttackingPlayerIdx(2);
+      setDefendingPlayerIdx(0);
 
-    if (PLAYER_COUNT > 2) {
-      sort(cardRefsOf(players[1]), "y", players[1]);
-    }
-
-    if (PLAYER_COUNT > 3) {
-      sort(cardRefsOf(players[3]), "y", players[3]);
-    }
-
-    function cardRefsOf(player: IPlayer): (HTMLDivElement | null)[] {
-      return cardRefs.current.filter((_, i) =>
-        player.cardIndexes.some((idx) => idx === i)
-      );
-    }
-
-    function sort(
-      refs: (HTMLDivElement | null)[],
-      translationDir: "x" | "y",
-      player: IPlayer
-    ): void {
-      setPlayers((prev) =>
-        prev.map((item) =>
-          item === player
-            ? {
-                ...item,
-                cardIndexes: item.cardIndexes
-                  .slice()
-                  .sort((a, b) => cardComparator(cards[a], cards[b])),
-              }
-            : item
-        )
-      );
-
-      refs
-        .sort((a, b) =>
-          cardComparator(
-            cards[cardRefs.current.findIndex((ref) => ref === a)],
-            cards[cardRefs.current.findIndex((ref) => ref === b)]
-          )
-        )
-        .forEach((card, i) => {
-          const translation =
-            (i - Math.floor(refs.length / 2)) * (cardWidth / 3);
-
-          gsap.set(card, { zIndex: i });
-
-          const tl = gsap.timeline({ defaults: { duration: 0.7 } });
-          tl.to(card, { [translationDir]: 0 });
-          tl.to(card, {
-            [translationDir]: translation,
-            ...(!isGameStarted &&
-              i === refs.length - 1 && {
-                onComplete: () => {
-                  setActivePlayerIdx(2);
-                  setAttackingPlayerIdx(2);
-                  setDefendingPlayerIdx(0);
-                  setShowHelp(true);
-                  setIsGameStarted(true);
-                },
-              }),
-          });
-        });
-    }
-  }, [cardWidth, cards, isGameStarted, players]);
+      setShowHelp(true);
+      setIsGameStarted(true);
+    },
+    cardRefs,
+    cards
+  );
 
   function setTrump(): void {
     assert(cards.every((card) => !card.isTrump));
@@ -590,7 +538,7 @@ export default function GameScene() {
     setSelectedCardIdx(0);
   }, [players, activePlayerIdx, userPlayer, isGameStarted, selectedCardIdx]);
 
-  const cardsToShow = useMemo<(Card | null)[]>(
+  const cardsToShow = useMemo<(ICard | null)[]>(
     () =>
       isGameStarted
         ? cards
