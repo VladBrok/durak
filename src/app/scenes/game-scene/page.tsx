@@ -19,6 +19,7 @@ import {
   CARD_COUNT_FOR_ANIMATION,
   DECK,
   IPlayer,
+  MAX_ATTACK_CARDS,
   PLAYERS,
   PLAYER_COUNT,
 } from "../../../utils/config";
@@ -40,6 +41,7 @@ export default function GameScene() {
   const [defendCardIndexes, setDefendCardIndexes] = useState<number[]>([]);
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
   const [defendingPlayerIdx, setDefendingPlayerIdx] = useState(0);
+  const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
   const [activePlayerIdx, setActivePlayerIdx] = useState(
     PLAYER_COUNT > 2 ? 2 : 1
   );
@@ -106,6 +108,7 @@ export default function GameScene() {
               i === refs.length - 1 && {
                 onComplete: () => {
                   setActivePlayerIdx(1);
+                  setAttackingPlayerIdx(1);
                   setDefendingPlayerIdx(2);
                   setShowHelp(true);
                   // setSelectedCardIdx(0);
@@ -141,6 +144,31 @@ export default function GameScene() {
     );
   }
 
+  const handleSuccessfulDefence = useCallback(() => {
+    console.log("nice def");
+  }, []);
+
+  const handleAttackFail = useCallback(() => {
+    let nextActiveIdx = (activePlayerIdx + 1) % PLAYER_COUNT;
+
+    if (nextActiveIdx === defendingPlayerIdx) {
+      nextActiveIdx = (nextActiveIdx + 1) % PLAYER_COUNT;
+    }
+
+    assert(nextActiveIdx !== defendingPlayerIdx);
+
+    if (nextActiveIdx === attackingPlayerIdx) {
+      handleSuccessfulDefence();
+    } else {
+      setActivePlayerIdx(nextActiveIdx);
+    }
+  }, [
+    activePlayerIdx,
+    defendingPlayerIdx,
+    attackingPlayerIdx,
+    handleSuccessfulDefence,
+  ]);
+
   // Select card
   useEffect(() => {
     if (!cardRefs.current.length) {
@@ -171,6 +199,12 @@ export default function GameScene() {
     (onSuccess?: () => void): boolean => {
       assert(activePlayerIdx !== defendingPlayerIdx);
 
+      if (attackCardIndexes.length === MAX_ATTACK_CARDS) {
+        console.log("max attack cards reached");
+        handleAttackFail();
+        return false;
+      }
+
       const player = players[activePlayerIdx];
       let cardIdx = 0;
 
@@ -187,7 +221,8 @@ export default function GameScene() {
         );
 
         if (idx == null) {
-          console.log("cannot attack");
+          console.log("no card to attack");
+          handleAttackFail();
           return false;
         }
 
@@ -257,6 +292,7 @@ export default function GameScene() {
       defendCardIndexes,
       selectedCardIdx,
       defendingPlayerIdx,
+      handleAttackFail,
     ]
   );
 

@@ -7,6 +7,7 @@ export interface IPlayer {
   cardIndexes: number[];
 }
 
+export const MAX_ATTACK_CARDS = 6;
 export const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
 export const PLAYER_COUNT = 4;
 export const CARDS_PER_PLAYER = 6;
