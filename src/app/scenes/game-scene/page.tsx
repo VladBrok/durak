@@ -26,9 +26,10 @@ import {
 import { useCardSize } from "../../../hooks/use-card-size";
 import CardDistributionAnimation from "../../../components/card-distribution-animation/card-distribution-animation";
 import { useCardSort } from "../../../hooks/use-card-sort";
+import { useSelectCard } from "../../../hooks/use-select-card";
 
 // TODO: extract some animations to hooks/animations/
-// TODO: compute some values (player cards) to simplify code
+// TODO: compute some values (player cards) to simplify code ??
 
 gsap.registerPlugin(Flip);
 
@@ -53,6 +54,8 @@ export default function GameScene() {
   const prevActivePlayerIdx = useRef<null | number>(null);
 
   const userPlayer = players.find((pl) => pl.isUser)!;
+
+  useSelectCard(cardRefs, selectedCardIdx, userPlayer);
 
   const sortCards = useCardSort(
     players,
@@ -149,6 +152,7 @@ export default function GameScene() {
   const handleSuccessfulDefence = useCallback(() => {
     console.log("nice def");
     discardCards(() => {
+      // TODO: give cards to each player
       sortCards();
     });
   }, [discardCards, sortCards]);
@@ -173,32 +177,6 @@ export default function GameScene() {
     attackingPlayerIdx,
     handleSuccessfulDefence,
   ]);
-
-  // Select card
-  useEffect(() => {
-    if (!cardRefs.current.length) {
-      return;
-    }
-
-    gsap.set(
-      userPlayer.cardIndexes
-        .filter((_, i) => i !== selectedCardIdx)
-        .map((card) => cardRefs.current[card]),
-      {
-        yPercent: 0,
-      }
-    );
-
-    if (selectedCardIdx === null) {
-      return;
-    }
-
-    const refIdx = userPlayer.cardIndexes[selectedCardIdx];
-
-    gsap.set(cardRefs.current[refIdx], {
-      yPercent: -50,
-    });
-  }, [selectedCardIdx, userPlayer]);
 
   const attack = useCallback(
     (onSuccess?: () => void): boolean => {
