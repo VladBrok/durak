@@ -395,7 +395,7 @@ export default function GameScene() {
             if (newSelectedCard === null) {
               const prevIdx = prevActivePlayerIdx.current;
               prevActivePlayerIdx.current = activePlayerIdx;
-              assert(prevIdx);
+              assert(prevIdx !== null);
               setActivePlayerIdx(prevIdx);
             }
 
