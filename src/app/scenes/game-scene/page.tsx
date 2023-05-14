@@ -204,21 +204,7 @@ export default function GameScene() {
           const state = Flip.getState(el);
 
           el.classList.remove(styles["card-bottom"]);
-          el.classList.add(
-            styles[
-              attackCards.length === 0
-                ? "card-attack-first"
-                : attackCards.length === 1
-                ? "card-attack-second"
-                : attackCards.length === 2
-                ? "card-attack-third"
-                : attackCards.length === 3
-                ? "card-attack-fourth"
-                : attackCards.length === 4
-                ? "card-attack-fifth"
-                : "card-attack-sixth"
-            ]
-          );
+          el.classList.add(styles[`card-attack-${attackCards.length}`]);
           gsap.set(el, {
             x: 0,
             y: 0,
