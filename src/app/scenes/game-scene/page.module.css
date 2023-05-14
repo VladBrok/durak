@@ -109,6 +109,14 @@
   left: calc(50% + var(--card-width) * 0.5 + var(--attack-card-gap));
 }
 
+.card-discarded {
+  width: var(--card-width);
+  height: var(--card-height);
+  position: absolute;
+  top: calc(100% - var(--card-height));
+  left: calc(100% - var(--card-width));
+}
+
 .help {
   position: absolute;
   top: 50%;

@@ -39,6 +39,9 @@ export default function GameScene() {
   const [showHelp, setShowHelp] = useState(false);
   const [attackCardIndexes, setAttackCardIndexes] = useState<number[]>([]);
   const [defendCardIndexes, setDefendCardIndexes] = useState<number[]>([]);
+  const [discardedCardIndexes, setDiscardedCardIndexes] = useState<number[]>(
+    []
+  );
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
   const [defendingPlayerIdx, setDefendingPlayerIdx] = useState(0);
   const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
@@ -57,7 +60,7 @@ export default function GameScene() {
     );
   }
 
-  function sortCards(): void {
+  const sortCards = useCallback((): void => {
     sort(cardRefsOf(userPlayer), "x", userPlayer);
     sort(cardRefsOf(players[0]), "x", players[0]);
 
@@ -118,7 +121,7 @@ export default function GameScene() {
           });
         });
     }
-  }
+  }, [cardWidth, cards, isGameStarted, players, userPlayer]);
 
   function setTrump(): void {
     assert(cards.every((card) => !card.isTrump));
@@ -144,9 +147,64 @@ export default function GameScene() {
     );
   }
 
+  const discardCards = useCallback(
+    (onComplete?: () => void) => {
+      setDiscardedCardIndexes((prev) => [
+        ...prev,
+        ...attackCardIndexes,
+        ...defendCardIndexes,
+      ]);
+
+      const attackAndDefendRefs = [
+        ...attackCardIndexes,
+        ...defendCardIndexes,
+      ].map((idx) => cardRefs.current[idx]);
+
+      const attackAndDefendCards = [
+        ...attackCardIndexes,
+        ...defendCardIndexes,
+      ].map((idx) => cards[idx]);
+
+      setCards((prev) =>
+        prev.map((card) =>
+          attackAndDefendCards.includes(card)
+            ? { ...card, isFaceUp: false }
+            : card
+        )
+      );
+
+      const state = Flip.getState(attackAndDefendRefs);
+
+      gsap.set(attackAndDefendRefs, {
+        x: 0,
+        y: 0,
+      });
+
+      attackAndDefendRefs.forEach((el) => {
+        assert(el);
+        el.className = "";
+        el.classList.add(styles["card-discarded"]);
+      });
+
+      Flip.from(state, {
+        duration: 1,
+        onComplete: () => {
+          onComplete?.();
+        },
+      });
+
+      setDefendCardIndexes([]);
+      setAttackCardIndexes([]);
+    },
+    [attackCardIndexes, cards, defendCardIndexes]
+  );
+
   const handleSuccessfulDefence = useCallback(() => {
     console.log("nice def");
-  }, []);
+    discardCards(() => {
+      sortCards();
+    });
+  }, [discardCards, sortCards]);
 
   const handleAttackFail = useCallback(() => {
     let nextActiveIdx = (activePlayerIdx + 1) % PLAYER_COUNT;
