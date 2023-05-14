@@ -52,7 +52,6 @@ export default function GameScene() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
-  const canMoveCards = selectedCardIdx !== null;
   const userPlayer = players.find((pl) => pl.isUser)!;
 
   const sortCards = useCardSort(
@@ -414,7 +413,7 @@ export default function GameScene() {
 
   const handleKeydown = useCallback(() => {
     return (e: KeyboardEvent) => {
-      if (!canMoveCards || selectedCardIdx === null || selectedCardIdx < 0) {
+      if (selectedCardIdx === null || selectedCardIdx < 0) {
         return;
       }
 
@@ -471,7 +470,6 @@ export default function GameScene() {
       }
     };
   }, [
-    canMoveCards,
     selectedCardIdx,
     activePlayerIdx,
     defendingPlayerIdx,
