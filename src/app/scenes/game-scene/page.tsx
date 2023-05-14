@@ -54,14 +54,9 @@ export default function GameScene() {
   const canMoveCards = selectedCardIdx !== null;
   const userPlayer = players.find((pl) => pl.isUser)!;
 
-  function cardRefsOf(player: IPlayer): (HTMLDivElement | null)[] {
-    return cardRefs.current.filter((_, i) =>
-      player.cardIndexes.some((idx) => idx === i)
-    );
-  }
-
   const sortCards = useCallback((): void => {
-    sort(cardRefsOf(userPlayer), "x", userPlayer);
+    const bottomPlayerIdx = PLAYER_COUNT > 2 ? 2 : 1;
+    sort(cardRefsOf(players[bottomPlayerIdx]), "x", players[bottomPlayerIdx]);
     sort(cardRefsOf(players[0]), "x", players[0]);
 
     if (PLAYER_COUNT > 2) {
@@ -70,6 +65,12 @@ export default function GameScene() {
 
     if (PLAYER_COUNT > 3) {
       sort(cardRefsOf(players[3]), "y", players[3]);
+    }
+
+    function cardRefsOf(player: IPlayer): (HTMLDivElement | null)[] {
+      return cardRefs.current.filter((_, i) =>
+        player.cardIndexes.some((idx) => idx === i)
+      );
     }
 
     function sort(
@@ -120,7 +121,7 @@ export default function GameScene() {
           });
         });
     }
-  }, [cardWidth, cards, isGameStarted, players, userPlayer]);
+  }, [cardWidth, cards, isGameStarted, players]);
 
   function setTrump(): void {
     assert(cards.every((card) => !card.isTrump));
@@ -205,7 +206,7 @@ export default function GameScene() {
     });
   }, [discardCards, sortCards]);
 
-  const handleAttackFail = useCallback(() => {
+  const handleFailedAttack = useCallback(() => {
     let nextActiveIdx = (activePlayerIdx + 1) % PLAYER_COUNT;
 
     if (nextActiveIdx === defendingPlayerIdx) {
@@ -258,7 +259,7 @@ export default function GameScene() {
 
       if (attackCardIndexes.length === MAX_ATTACK_CARDS) {
         console.log("max attack cards reached");
-        handleAttackFail();
+        handleFailedAttack();
         return false;
       }
 
@@ -279,7 +280,7 @@ export default function GameScene() {
 
         if (idx == null) {
           console.log("no card to attack");
-          handleAttackFail();
+          handleFailedAttack();
           return false;
         }
 
@@ -349,7 +350,7 @@ export default function GameScene() {
       defendCardIndexes,
       selectedCardIdx,
       defendingPlayerIdx,
-      handleAttackFail,
+      handleFailedAttack,
     ]
   );
 
@@ -498,7 +499,7 @@ export default function GameScene() {
             prevActivePlayerIdx.current = activePlayerIdx;
             setActivePlayerIdx(defendingPlayerIdx);
           } else {
-            handleAttackFail();
+            handleFailedAttack();
             setSelectedCardIdx(null);
           }
 
@@ -531,7 +532,7 @@ export default function GameScene() {
     attackCardIndexes.length,
     defendCardIndexes.length,
     userPlayer.cardIndexes.length,
-    handleAttackFail,
+    handleFailedAttack,
   ]);
 
   useEffect(() => {
