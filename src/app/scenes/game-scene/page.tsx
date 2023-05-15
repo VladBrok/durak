@@ -182,7 +182,6 @@ export default function GameScene() {
 
   const giveCardsToEachPlayer = useCallback(
     (onComplete?: () => void) => {
-      // TODO
       const indexesOfCardsInUse = [
         ...attackCardIndexes,
         ...defendCardIndexes,
@@ -200,6 +199,8 @@ export default function GameScene() {
       );
 
       if (!indexesOfAvailableCards.length) {
+        console.log("no cards available");
+        onComplete?.();
         return;
       }
 
