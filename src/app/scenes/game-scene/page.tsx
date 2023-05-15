@@ -177,6 +177,11 @@ export default function GameScene() {
     prevActivePlayerIdx.current = null;
   }, [attackingPlayerIdx, defendingPlayerIdx, players, userPlayer]);
 
+  const giveCardsToEachPlayer = useCallback((onComplete?: () => void) => {
+    // TODO
+    onComplete?.();
+  }, []);
+
   const handleSuccessfulDefence = useCallback(() => {
     console.log("nice def");
     setSelectedCardIdx(null);
@@ -186,15 +191,17 @@ export default function GameScene() {
         return;
       }
 
-      // TODO: give cards to each player, and than do sort and change
-      sortCards(() => {
-        changeAttackingAndDefendingPlayers();
+      giveCardsToEachPlayer(() => {
+        sortCards(() => {
+          changeAttackingAndDefendingPlayers();
+        });
       });
     });
   }, [
     changeAttackingAndDefendingPlayers,
     checkForEndOfGame,
     discardCards,
+    giveCardsToEachPlayer,
     sortCards,
   ]);
 
@@ -280,12 +287,23 @@ export default function GameScene() {
           item === prev[cardIdx] ? { ...item, isFaceUp: true } : item
         )
       );
+      setPlayers((prev) =>
+        prev.map((pl) => {
+          return pl === player
+            ? {
+                ...pl,
+                cardIndexes: pl.cardIndexes.filter((x) => x !== cardIdx),
+              }
+            : pl;
+        })
+      );
+
+      setAttackCardIndexes((prev) => [...prev, cardIdx]);
 
       gsap.set(cardRef, { rotateZ: 0 });
 
       const state = Flip.getState(cardRef);
 
-      cardRef.classList.remove(styles["card-bottom"]);
       cardRef.classList.add(styles[`card-attack-${attackCardIndexes.length}`]);
       gsap.set(cardRef, {
         x: 0,
@@ -299,19 +317,6 @@ export default function GameScene() {
           onSuccess?.();
         },
       });
-
-      setPlayers((prev) =>
-        prev.map((pl) => {
-          return pl === player
-            ? {
-                ...pl,
-                cardIndexes: pl.cardIndexes.filter((x) => x !== cardIdx),
-              }
-            : pl;
-        })
-      );
-
-      setAttackCardIndexes((prev) => [...prev, cardIdx]);
 
       return true;
     },
@@ -401,7 +406,6 @@ export default function GameScene() {
 
         const state = Flip.getState(cardRef);
 
-        cardRef.classList.remove(styles["card-top"]);
         cardRef.classList.add(
           styles[`card-attack-${defendCardIndexes.length + i}`]
         );
