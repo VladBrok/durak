@@ -2,7 +2,7 @@ import { MutableRefObject, useEffect } from "react";
 import { gsap } from "gsap";
 import { IPlayer } from "../utils/config";
 
-export function useSelectCard(
+export function useCardSelectAnimation(
   cardRefs: MutableRefObject<(HTMLDivElement | null)[]>,
   selectedCardIdx: number | null,
   userPlayer: IPlayer

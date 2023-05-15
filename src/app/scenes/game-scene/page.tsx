@@ -26,7 +26,7 @@ import {
 import { useCardSize } from "../../../hooks/use-card-size";
 import CardDistributionAnimation from "../../../components/card-distribution-animation/card-distribution-animation";
 import { useCardSort } from "../../../hooks/use-card-sort";
-import { useSelectCard } from "../../../hooks/use-select-card";
+import { useCardSelectAnimation } from "../../../hooks/use-select-card";
 
 // TODO: extract some animations to hooks/animations/
 // TODO: compute some values (player cards) to simplify code ??
@@ -51,7 +51,7 @@ export default function GameScene() {
 
   const userPlayer = players.find((pl) => pl.isUser)!;
 
-  useSelectCard(cardRefs, selectedCardIdx, userPlayer);
+  useCardSelectAnimation(cardRefs, selectedCardIdx, userPlayer);
 
   const sortCards = useCardSort(players, setPlayers, cardRefs, cards);
 
@@ -174,7 +174,7 @@ export default function GameScene() {
       setSelectedCardIdx(0);
     }
 
-    prevActivePlayerIdx.current = null;
+    prevActivePlayerIdx.current = null; // TODO: bad (?)
   }, [attackingPlayerIdx, defendingPlayerIdx, players, userPlayer]);
 
   const giveCardsToEachPlayer = useCallback((onComplete?: () => void) => {
@@ -220,7 +220,6 @@ export default function GameScene() {
       handleSuccessfulDefence();
     } else {
       setActivePlayerIdx(nextActiveIdx);
-
       if (players[nextActiveIdx] === userPlayer) {
         setSelectedCardIdx(0);
       }
@@ -460,8 +459,6 @@ export default function GameScene() {
           let newSelectedCardIdx: number | null = null;
 
           const isDefended = func(() => {
-            console.log("new s:", newSelectedCardIdx);
-
             if (newSelectedCardIdx === null) {
               const prevIdx = prevActivePlayerIdx.current;
               prevActivePlayerIdx.current = activePlayerIdx;
@@ -483,7 +480,6 @@ export default function GameScene() {
           setSelectedCardIdx(newSelectedCardIdx);
 
           if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
-            console.log("defending idx:", defendingPlayerIdx);
             setActivePlayerIdx(defendingPlayerIdx);
           }
 
