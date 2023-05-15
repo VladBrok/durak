@@ -19,6 +19,7 @@ export function useCardSort(
   const cardSort = useCallback(
     (onComplete: () => void): void => {
       const bottomPlayerIdx = PLAYER_COUNT > 2 ? 2 : 1;
+
       sort(cardRefsOf(players[bottomPlayerIdx]), "x", players[bottomPlayerIdx]);
       sort(cardRefsOf(players[0]), "x", players[0]);
 

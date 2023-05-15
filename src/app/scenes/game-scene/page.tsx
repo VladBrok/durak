@@ -212,32 +212,88 @@ export default function GameScene() {
         players[defendingPlayerIdx]
       );
 
-      setPlayers((prev) => {
-        const newPlayers = prev.map((player) => {
-          const additionalCardIndexes =
-            player === prev[attackingPlayerIdx]
-              ? cardIndexesForAttacker
-              : player === prev[defendingPlayerIdx]
-              ? cardIndexesForDefender
-              : takeAvailableCardsFor(player);
+      const additionalCardIndexes: number[][] = Array(PLAYER_COUNT)
+        .fill(0)
+        .map((_, i) =>
+          i === attackingPlayerIdx
+            ? cardIndexesForAttacker
+            : i === defendingPlayerIdx
+            ? cardIndexesForDefender
+            : takeAvailableCardsFor(players[i])
+        );
 
-          return {
-            ...player,
-            cardIndexes: [...player.cardIndexes, ...additionalCardIndexes],
-          };
+      const newPlayers = players.map((player, i) => {
+        return {
+          ...player,
+          cardIndexes: [...player.cardIndexes, ...additionalCardIndexes[i]],
+        };
+      });
+      console.log(newPlayers);
+      // TODO: find a way to update players at this moment because sortCards that called after this sorts cards of old players (flushSync does not work) (store players as Ref ?)
+      setPlayers(newPlayers);
+
+      animate(0, [
+        attackingPlayerIdx,
+        defendingPlayerIdx,
+        ...Array(PLAYER_COUNT)
+          .fill(0)
+          .map((_, i) => i)
+          .filter((i) => i !== attackingPlayerIdx && i !== defendingPlayerIdx),
+      ]);
+
+      function animate(cur: number, allPlayerIndexes: number[]): void {
+        const playerIdx = allPlayerIndexes[cur];
+
+        if (players[playerIdx] === userPlayer) {
+          setCards((prev) =>
+            prev.map((card, i) =>
+              additionalCardIndexes[playerIdx].includes(i)
+                ? { ...card, isFaceUp: true }
+                : card
+            )
+          );
+        }
+
+        const refs = additionalCardIndexes[playerIdx].map(
+          (idx) => cardRefs.current[idx]
+        );
+
+        gsap.set(refs, {
+          rotateZ: players[playerIdx].cardRotateZ,
         });
 
-        console.log(newPlayers);
+        const state = Flip.getState(refs);
 
-        return newPlayers;
-      });
+        refs.forEach((ref) => {
+          assert(ref);
+          ref.className = "";
+          ref.classList.add(players[playerIdx].cardCssClassName);
+        });
 
-      onComplete?.();
+        Flip.from(state, {
+          duration: 1,
+          stagger: 0.2,
+          onComplete: () => {
+            if (cur === allPlayerIndexes.length - 1) {
+              onComplete?.();
+            } else {
+              animate(cur + 1, allPlayerIndexes);
+            }
+          },
+        });
+      }
 
       function takeAvailableCardsFor(player: IPlayer): number[] {
-        return indexesOfAvailableCards.splice(
-          -Math.max(0, CARDS_PER_PLAYER - player.cardIndexes.length)
+        const needed = Math.max(
+          0,
+          CARDS_PER_PLAYER - player.cardIndexes.length
         );
+
+        if (!needed) {
+          return [];
+        }
+
+        return indexesOfAvailableCards.splice(-needed, needed);
       }
     },
     [
@@ -247,6 +303,7 @@ export default function GameScene() {
       defendingPlayerIdx,
       discardedCardIndexes,
       players,
+      userPlayer,
     ]
   );
 
@@ -430,7 +487,7 @@ export default function GameScene() {
           );
 
           if (cardThatBeats < 0) {
-            console.log("lost");
+            console.log("lost round");
             return false;
           }
 
@@ -561,7 +618,7 @@ export default function GameScene() {
             setActivePlayerIdx(defendingPlayerIdx);
 
             if (players[defendingPlayerIdx] === userPlayer) {
-              console.log("lost", "(player)");
+              console.log("lost round", "(player)");
             }
           } else {
             handleFailedAttack();

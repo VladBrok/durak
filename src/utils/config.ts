@@ -7,11 +7,12 @@ export interface IPlayer {
   isUser: boolean;
   cardIndexes: number[];
   cardCssClassName: string;
+  cardRotateZ: number;
 }
 
 export const MAX_ATTACK_CARDS = 3;
 export const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
-export const PLAYER_COUNT = 3;
+export const PLAYER_COUNT = 4;
 export const CARDS_PER_PLAYER = 6;
 export const DECK = makeShuffledDeck();
 export const PLAYERS = Array(PLAYER_COUNT)
@@ -27,6 +28,7 @@ export const PLAYERS = Array(PLAYER_COUNT)
         : i === 1 && PLAYER_COUNT > 2
         ? styles["card-right"]
         : styles["card-left"],
+    cardRotateZ: i === 3 || (i === 1 && PLAYER_COUNT > 2) ? 90 : 0,
   }));
 
 assert(PLAYERS.filter((player) => player.isUser).length === 1);

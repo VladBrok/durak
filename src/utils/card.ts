@@ -41,7 +41,7 @@ export function makeShuffledDeck(): ICard[] {
       cards[cardIdx++] = {
         suit: Suits[i],
         rank: Ranks[j],
-        isFaceUp: true,
+        isFaceUp: false,
         isTrump: false,
       };
     }
