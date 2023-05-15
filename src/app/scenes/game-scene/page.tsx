@@ -41,15 +41,11 @@ export default function GameScene() {
   const [showHelp, setShowHelp] = useState(false);
   const [attackCardIndexes, setAttackCardIndexes] = useState<number[]>([]);
   const [defendCardIndexes, setDefendCardIndexes] = useState<number[]>([]);
-  const [discardedCardIndexes, setDiscardedCardIndexes] = useState<number[]>(
-    []
-  );
+  const [, setDiscardedCardIndexes] = useState<number[]>([]);
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
   const [defendingPlayerIdx, setDefendingPlayerIdx] = useState(0);
   const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
-  const [activePlayerIdx, setActivePlayerIdx] = useState(
-    PLAYER_COUNT > 2 ? 2 : 1
-  );
+  const [activePlayerIdx, setActivePlayerIdx] = useState(0);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
@@ -57,21 +53,7 @@ export default function GameScene() {
 
   useSelectCard(cardRefs, selectedCardIdx, userPlayer);
 
-  const sortCards = useCardSort(
-    players,
-    setPlayers,
-    isGameStarted,
-    () => {
-      setActivePlayerIdx(2);
-      setAttackingPlayerIdx(2);
-      setDefendingPlayerIdx(0);
-
-      setShowHelp(true);
-      setIsGameStarted(true);
-    },
-    cardRefs,
-    cards
-  );
+  const sortCards = useCardSort(players, setPlayers, cardRefs, cards);
 
   function setTrump(): void {
     assert(cards.every((card) => !card.isTrump));
@@ -81,7 +63,11 @@ export default function GameScene() {
     setCards((prev) =>
       prev.map((card) =>
         card.suit === trump.suit
-          ? { ...card, isTrump: true, isFaceUp: card === trump }
+          ? {
+              ...card,
+              isTrump: true,
+              isFaceUp: card === trump ? true : card.isFaceUp,
+            }
           : card
       )
     );
@@ -122,6 +108,8 @@ export default function GameScene() {
             : card
         )
       );
+      setDefendCardIndexes([]);
+      setAttackCardIndexes([]);
 
       const state = Flip.getState(attackAndDefendRefs);
 
@@ -129,7 +117,6 @@ export default function GameScene() {
         x: 0,
         y: 0,
       });
-
       attackAndDefendRefs.forEach((el) => {
         assert(el);
         el.className = "";
@@ -142,22 +129,78 @@ export default function GameScene() {
           onComplete?.();
         },
       });
-
-      setDefendCardIndexes([]);
-      setAttackCardIndexes([]);
     },
     [attackCardIndexes, cards, defendCardIndexes]
   );
 
+  const checkForEndOfGame = useCallback((): boolean => {
+    const playersWithCards = players.filter(
+      (player) => player.cardIndexes.length
+    );
+
+    if (playersWithCards.length === 1) {
+      console.log("durak:", playersWithCards[0]);
+      return true;
+    }
+
+    if (playersWithCards.length === 0) {
+      console.log("draw");
+      return true;
+    }
+
+    return false;
+  }, [players]);
+
+  const changeAttackingAndDefendingPlayers = useCallback(() => {
+    assert(players.filter((player) => player.cardIndexes.length).length > 1);
+
+    let attackingIdx = 0;
+    do {
+      attackingIdx = (attackingPlayerIdx + 1) % players.length;
+    } while (!players[attackingIdx].cardIndexes.length);
+
+    let defendingIdx = 0;
+    do {
+      defendingIdx = (defendingPlayerIdx + 1) % players.length;
+    } while (!players[defendingIdx].cardIndexes.length);
+
+    assert(attackingIdx !== defendingIdx);
+
+    setAttackingPlayerIdx(attackingIdx);
+    setActivePlayerIdx(attackingIdx);
+    setDefendingPlayerIdx(defendingIdx);
+
+    if (players[attackingIdx] === userPlayer) {
+      setSelectedCardIdx(0);
+    }
+
+    prevActivePlayerIdx.current = null;
+  }, [attackingPlayerIdx, defendingPlayerIdx, players, userPlayer]);
+
   const handleSuccessfulDefence = useCallback(() => {
     console.log("nice def");
+    setSelectedCardIdx(null);
+
     discardCards(() => {
-      // TODO: give cards to each player
-      sortCards();
+      if (checkForEndOfGame()) {
+        return;
+      }
+
+      // TODO: give cards to each player, and than do sort and change
+      sortCards(() => {
+        changeAttackingAndDefendingPlayers();
+      });
     });
-  }, [discardCards, sortCards]);
+  }, [
+    changeAttackingAndDefendingPlayers,
+    checkForEndOfGame,
+    discardCards,
+    sortCards,
+  ]);
 
   const handleFailedAttack = useCallback(() => {
+    setSelectedCardIdx(null);
+
     let nextActiveIdx = (activePlayerIdx + 1) % PLAYER_COUNT;
 
     if (nextActiveIdx === defendingPlayerIdx) {
@@ -170,12 +213,18 @@ export default function GameScene() {
       handleSuccessfulDefence();
     } else {
       setActivePlayerIdx(nextActiveIdx);
+
+      if (players[nextActiveIdx] === userPlayer) {
+        setSelectedCardIdx(0);
+      }
     }
   }, [
     activePlayerIdx,
     defendingPlayerIdx,
     attackingPlayerIdx,
     handleSuccessfulDefence,
+    players,
+    userPlayer,
   ]);
 
   const attack = useCallback(
@@ -323,6 +372,25 @@ export default function GameScene() {
           attackCardIndexes.length - defendCardIndexes.length
       );
 
+      setPlayers((prev) =>
+        prev.map((player) =>
+          player === players[defendingPlayerIdx]
+            ? {
+                ...player,
+                cardIndexes: player.cardIndexes.filter(
+                  (card) => !curDefendCardIndexes.includes(card)
+                ),
+              }
+            : player
+        )
+      );
+      setCards((prev) =>
+        prev.map((card, i) =>
+          curDefendCardIndexes.includes(i) ? { ...card, isFaceUp: true } : card
+        )
+      );
+      setDefendCardIndexes((prev) => [...prev, ...curDefendCardIndexes]);
+
       for (let i = 0; i < curDefendCardIndexes.length; i++) {
         const defendCardIdx = curDefendCardIndexes[i];
         const cardRef = cardRefs.current[defendCardIdx];
@@ -351,27 +419,6 @@ export default function GameScene() {
             }
           },
         });
-
-        setPlayers((prev) =>
-          prev.map((player) =>
-            player === players[defendingPlayerIdx]
-              ? {
-                  ...player,
-                  cardIndexes: player.cardIndexes.filter(
-                    (card) => card !== defendCardIdx
-                  ),
-                }
-              : player
-          )
-        );
-
-        setCards((prev) =>
-          prev.map((card, i) =>
-            i === defendCardIdx ? { ...card, isFaceUp: true } : card
-          )
-        );
-
-        setDefendCardIndexes((prev) => [...prev, defendCardIdx]);
       }
 
       return true;
@@ -397,24 +444,44 @@ export default function GameScene() {
 
       switch (e.key) {
         case "ArrowUp":
+          if (
+            players[defendingPlayerIdx] !== userPlayer &&
+            attackCardIndexes.length === MAX_ATTACK_CARDS
+          ) {
+            return;
+          }
+
           const func = activePlayerIdx === defendingPlayerIdx ? defend : attack;
 
-          func(() => {
-            const newSelectedCard =
-              func === defend &&
-              attackCardIndexes.length === defendCardIndexes.length + 1
-                ? null
-                : Math.min(selectedCardIdx, userPlayer.cardIndexes.length - 2);
+          let newSelectedCardIdx: number | null = null;
 
-            if (newSelectedCard === null) {
+          const isDefended = func(() => {
+            console.log("new s:", newSelectedCardIdx);
+
+            if (newSelectedCardIdx === null) {
               const prevIdx = prevActivePlayerIdx.current;
               prevActivePlayerIdx.current = activePlayerIdx;
               assert(prevIdx !== null);
               setActivePlayerIdx(prevIdx);
             }
-
-            setSelectedCardIdx(newSelectedCard);
           });
+
+          newSelectedCardIdx =
+            func === defend &&
+            isDefended &&
+            attackCardIndexes.length === defendCardIndexes.length + 1
+              ? null
+              : Math.min(
+                  selectedCardIdx,
+                  userPlayer.cardIndexes.length - (isDefended ? 2 : 1)
+                );
+
+          setSelectedCardIdx(newSelectedCardIdx);
+
+          if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
+            console.log("defending idx:", defendingPlayerIdx);
+            setActivePlayerIdx(defendingPlayerIdx);
+          }
 
           setShowHelp(false);
           break;
@@ -423,6 +490,10 @@ export default function GameScene() {
             setSelectedCardIdx(null);
             prevActivePlayerIdx.current = activePlayerIdx;
             setActivePlayerIdx(defendingPlayerIdx);
+
+            if (players[defendingPlayerIdx] === userPlayer) {
+              console.log("lost", "(player)");
+            }
           } else {
             handleFailedAttack();
             setSelectedCardIdx(null);
@@ -453,9 +524,10 @@ export default function GameScene() {
     defendingPlayerIdx,
     defend,
     attack,
+    userPlayer,
     attackCardIndexes.length,
     defendCardIndexes.length,
-    userPlayer.cardIndexes.length,
+    players,
     handleFailedAttack,
   ]);
 
@@ -477,6 +549,8 @@ export default function GameScene() {
       return;
     }
 
+    setSelectedCardIdx(null);
+
     const prevIdx = prevActivePlayerIdx.current;
 
     prevActivePlayerIdx.current = activePlayerIdx;
@@ -485,10 +559,16 @@ export default function GameScene() {
       defend(() => {
         assert(prevIdx !== null);
         setActivePlayerIdx(prevIdx);
+        if (players[prevIdx] === userPlayer) {
+          setSelectedCardIdx(0);
+        }
       });
     } else {
       attack(() => {
         setActivePlayerIdx(defendingPlayerIdx);
+        if (players[defendingPlayerIdx] === userPlayer) {
+          setSelectedCardIdx(0);
+        }
       });
     }
   }, [
@@ -500,19 +580,6 @@ export default function GameScene() {
     defendingPlayerIdx,
     defend,
   ]);
-
-  useEffect(() => {
-    if (
-      !isGameStarted ||
-      prevActivePlayerIdx.current === activePlayerIdx ||
-      players[activePlayerIdx] !== userPlayer ||
-      selectedCardIdx !== null
-    ) {
-      return;
-    }
-
-    setSelectedCardIdx(0);
-  }, [players, activePlayerIdx, userPlayer, isGameStarted, selectedCardIdx]);
 
   const cardsToShow = useMemo<(ICard | null)[]>(
     () =>
@@ -540,7 +607,7 @@ export default function GameScene() {
                 src={card ? getImageSrc(card) : "/images/cards/card-back.png"}
                 width={cardWidth}
                 height={cardHeight}
-                alt="card-back"
+                alt=""
               />
             </div>
           ))}
@@ -561,7 +628,18 @@ export default function GameScene() {
 
       <CardDistributionAnimation
         styles={styles}
-        sortCards={sortCards}
+        sortCards={() =>
+          sortCards(() => {
+            setActivePlayerIdx(1);
+            setAttackingPlayerIdx(1);
+            setDefendingPlayerIdx(0);
+
+            setSelectedCardIdx(0);
+
+            setShowHelp(true);
+            setIsGameStarted(true);
+          })
+        }
         setTrump={setTrump}
         revealUserCards={revealUserCards}
       />
