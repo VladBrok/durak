@@ -41,7 +41,9 @@ export default function GameScene() {
   const [showHelp, setShowHelp] = useState(false);
   const [attackCardIndexes, setAttackCardIndexes] = useState<number[]>([]);
   const [defendCardIndexes, setDefendCardIndexes] = useState<number[]>([]);
-  const [, setDiscardedCardIndexes] = useState<number[]>([]);
+  const [discardedCardIndexes, setDiscardedCardIndexes] = useState<number[]>(
+    []
+  );
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
   const [defendingPlayerIdx, setDefendingPlayerIdx] = useState(0);
   const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
@@ -178,10 +180,35 @@ export default function GameScene() {
     }
   }, [attackingPlayerIdx, defendingPlayerIdx, players, userPlayer]);
 
-  const giveCardsToEachPlayer = useCallback((onComplete?: () => void) => {
-    // TODO
-    onComplete?.();
-  }, []);
+  const giveCardsToEachPlayer = useCallback(
+    (onComplete?: () => void) => {
+      // TODO
+      const indexesOfCardsInUse = [
+        ...attackCardIndexes,
+        ...defendCardIndexes,
+        ...discardedCardIndexes,
+        ...players.flatMap((player) => player.cardIndexes),
+      ];
+      const indexesOfAvailableCards = Array(CARD_COUNT)
+        .fill(0)
+        .map((_, i) => i)
+        .filter((i) => !indexesOfCardsInUse.includes(i));
+
+      assert(
+        indexesOfAvailableCards.length + indexesOfCardsInUse.length ===
+          CARD_COUNT
+      );
+
+      if (!indexesOfAvailableCards.length) {
+        return;
+      }
+
+      console.log(indexesOfAvailableCards.map((i) => cardRefs.current[i]));
+
+      onComplete?.();
+    },
+    [attackCardIndexes, defendCardIndexes, discardedCardIndexes, players]
+  );
 
   const handleSuccessfulDefence = useCallback(() => {
     console.log("nice def");
