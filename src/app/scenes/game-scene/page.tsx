@@ -203,11 +203,50 @@ export default function GameScene() {
         return;
       }
 
-      console.log(indexesOfAvailableCards.map((i) => cardRefs.current[i]));
+      const cardIndexesForAttacker = takeAvailableCardsFor(
+        players[attackingPlayerIdx]
+      );
+
+      const cardIndexesForDefender = takeAvailableCardsFor(
+        players[defendingPlayerIdx]
+      );
+
+      setPlayers((prev) => {
+        const newPlayers = prev.map((player) => {
+          const additionalCardIndexes =
+            player === prev[attackingPlayerIdx]
+              ? cardIndexesForAttacker
+              : player === prev[defendingPlayerIdx]
+              ? cardIndexesForDefender
+              : takeAvailableCardsFor(player);
+
+          return {
+            ...player,
+            cardIndexes: [...player.cardIndexes, ...additionalCardIndexes],
+          };
+        });
+
+        console.log(newPlayers);
+
+        return newPlayers;
+      });
 
       onComplete?.();
+
+      function takeAvailableCardsFor(player: IPlayer): number[] {
+        return indexesOfAvailableCards.splice(
+          -Math.max(0, CARDS_PER_PLAYER - player.cardIndexes.length)
+        );
+      }
     },
-    [attackCardIndexes, defendCardIndexes, discardedCardIndexes, players]
+    [
+      attackCardIndexes,
+      attackingPlayerIdx,
+      defendCardIndexes,
+      defendingPlayerIdx,
+      discardedCardIndexes,
+      players,
+    ]
   );
 
   const handleSuccessfulDefence = useCallback(() => {
