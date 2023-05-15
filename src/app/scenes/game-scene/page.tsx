@@ -47,6 +47,7 @@ export default function GameScene() {
   const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
   const [activePlayerIdx, setActivePlayerIdx] = useState(0);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [forceBotAttack, setForceBotAttack] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
   const userPlayer = players.find((pl) => pl.isUser)!;
@@ -172,9 +173,9 @@ export default function GameScene() {
 
     if (players[attackingIdx] === userPlayer) {
       setSelectedCardIdx(0);
+    } else {
+      setForceBotAttack(true);
     }
-
-    prevActivePlayerIdx.current = null; // TODO: bad (?)
   }, [attackingPlayerIdx, defendingPlayerIdx, players, userPlayer]);
 
   const giveCardsToEachPlayer = useCallback((onComplete?: () => void) => {
@@ -460,6 +461,7 @@ export default function GameScene() {
 
           const isDefended = func(() => {
             if (newSelectedCardIdx === null) {
+              assert(prevActivePlayerIdx.current !== activePlayerIdx);
               const prevIdx = prevActivePlayerIdx.current;
               prevActivePlayerIdx.current = activePlayerIdx;
               assert(prevIdx !== null);
@@ -543,21 +545,22 @@ export default function GameScene() {
   useEffect(() => {
     if (
       !isGameStarted ||
-      prevActivePlayerIdx.current === activePlayerIdx ||
+      (prevActivePlayerIdx.current === activePlayerIdx && !forceBotAttack) ||
       players[activePlayerIdx] === userPlayer
     ) {
       return;
     }
 
     setSelectedCardIdx(null);
+    setForceBotAttack(false);
 
     const prevIdx = prevActivePlayerIdx.current;
-
     prevActivePlayerIdx.current = activePlayerIdx;
 
     if (players[activePlayerIdx] === players[defendingPlayerIdx]) {
       defend(() => {
         assert(prevIdx !== null);
+        assert(prevIdx !== activePlayerIdx);
         setActivePlayerIdx(prevIdx);
         if (players[prevIdx] === userPlayer) {
           setSelectedCardIdx(0);
@@ -579,6 +582,7 @@ export default function GameScene() {
     players,
     defendingPlayerIdx,
     defend,
+    forceBotAttack,
   ]);
 
   const cardsToShow = useMemo<(ICard | null)[]>(
