@@ -38,12 +38,10 @@ export default function GameScene() {
   const [cards, setCards] = useState<ICard[]>(DECK);
   const players = useRef<IPlayer[]>(PLAYERS);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const attackCardIndexes = useRef<number[]>([]);
+  const defendCardIndexes = useRef<number[]>([]);
+  const discardedCardIndexes = useRef<number[]>([]);
   const [showHelp, setShowHelp] = useState(false);
-  const [attackCardIndexes, setAttackCardIndexes] = useState<number[]>([]);
-  const [defendCardIndexes, setDefendCardIndexes] = useState<number[]>([]);
-  const [discardedCardIndexes, setDiscardedCardIndexes] = useState<number[]>(
-    []
-  );
   const [defendingPlayerIdx, setDefendingPlayerIdx] = useState(0);
   const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
   const [activePlayerIdx, setActivePlayerIdx] = useState(0);
@@ -91,20 +89,20 @@ export default function GameScene() {
 
   const discardCards = useCallback(
     (onComplete?: () => void) => {
-      setDiscardedCardIndexes((prev) => [
-        ...prev,
-        ...attackCardIndexes,
-        ...defendCardIndexes,
-      ]);
+      discardedCardIndexes.current = [
+        ...discardedCardIndexes.current,
+        ...attackCardIndexes.current,
+        ...defendCardIndexes.current,
+      ];
 
       const attackAndDefendRefs = [
-        ...attackCardIndexes,
-        ...defendCardIndexes,
+        ...attackCardIndexes.current,
+        ...defendCardIndexes.current,
       ].map((idx) => cardRefs.current[idx]);
 
       const attackAndDefendCards = [
-        ...attackCardIndexes,
-        ...defendCardIndexes,
+        ...attackCardIndexes.current,
+        ...defendCardIndexes.current,
       ].map((idx) => cards[idx]);
 
       setCards((prev) =>
@@ -114,8 +112,8 @@ export default function GameScene() {
             : card
         )
       );
-      setDefendCardIndexes([]);
-      setAttackCardIndexes([]);
+      attackCardIndexes.current = [];
+      defendCardIndexes.current = [];
 
       const state = Flip.getState(attackAndDefendRefs);
 
@@ -136,7 +134,7 @@ export default function GameScene() {
         },
       });
     },
-    [attackCardIndexes, cards, defendCardIndexes]
+    [cards]
   );
 
   const checkForEndOfGame = useCallback((): boolean => {
@@ -188,9 +186,9 @@ export default function GameScene() {
   const giveCardsToEachPlayer = useCallback(
     (onComplete?: () => void) => {
       const indexesOfCardsInUse = [
-        ...attackCardIndexes,
-        ...defendCardIndexes,
-        ...discardedCardIndexes,
+        ...attackCardIndexes.current,
+        ...defendCardIndexes.current,
+        ...discardedCardIndexes.current,
         ...players.current.flatMap((player) => player.cardIndexes),
       ];
       const indexesOfAvailableCards = Array(CARD_COUNT)
@@ -300,14 +298,7 @@ export default function GameScene() {
         return indexesOfAvailableCards.splice(-needed, needed);
       }
     },
-    [
-      attackCardIndexes,
-      attackingPlayerIdx,
-      defendCardIndexes,
-      defendingPlayerIdx,
-      discardedCardIndexes,
-      userPlayer,
-    ]
+    [attackingPlayerIdx, defendingPlayerIdx, userPlayer]
   );
 
   const handleSuccessfulDefence = useCallback(() => {
@@ -332,6 +323,73 @@ export default function GameScene() {
     giveCardsToEachPlayer,
     setSelectedCardIdx,
     sortCards,
+  ]);
+
+  const handleFailedDefence = useCallback(() => {
+    const defendingPlayer = players.current[defendingPlayerIdx];
+
+    const attackAndDefendCardIndexes = [
+      ...attackCardIndexes.current,
+      ...defendCardIndexes.current,
+    ];
+
+    players.current = players.current.map((player) =>
+      player === defendingPlayer
+        ? {
+            ...player,
+            cardIndexes: [...player.cardIndexes, ...attackAndDefendCardIndexes],
+          }
+        : player
+    );
+
+    const attackAndDefendRefs = attackAndDefendCardIndexes.map(
+      (idx) => cardRefs.current[idx]
+    );
+
+    setCards((prev) =>
+      prev.map((card, i) =>
+        attackAndDefendCardIndexes.includes(i)
+          ? {
+              ...card,
+              isFaceUp: players.current[defendingPlayerIdx] === userPlayer(),
+            }
+          : card
+      )
+    );
+    attackCardIndexes.current = [];
+    defendCardIndexes.current = [];
+
+    gsap.set(attackAndDefendRefs, {
+      x: 0,
+      y: 0,
+      yPercent: 0,
+      rotateZ: defendingPlayer.cardRotateZ,
+    });
+
+    const state = Flip.getState(attackAndDefendRefs);
+
+    attackAndDefendRefs.forEach((ref) => {
+      assert(ref);
+      ref.className = "";
+      ref.classList.add(defendingPlayer.cardCssClassName);
+    });
+
+    Flip.from(state, {
+      duration: 1,
+      onComplete: () => {
+        giveCardsToEachPlayer(() => {
+          sortCards(() => {
+            changeAttackingAndDefendingPlayers();
+          });
+        });
+      },
+    });
+  }, [
+    changeAttackingAndDefendingPlayers,
+    defendingPlayerIdx,
+    giveCardsToEachPlayer,
+    sortCards,
+    userPlayer,
   ]);
 
   const handleFailedAttack = useCallback(() => {
@@ -366,7 +424,7 @@ export default function GameScene() {
     (onSuccess?: () => void): boolean => {
       assert(activePlayerIdx !== defendingPlayerIdx);
 
-      if (attackCardIndexes.length === MAX_ATTACK_CARDS) {
+      if (attackCardIndexes.current.length === MAX_ATTACK_CARDS) {
         console.log("max attack cards reached");
         handleFailedAttack();
         return false;
@@ -382,8 +440,8 @@ export default function GameScene() {
         const idx = player.cardIndexes.find((idx) =>
           canAttackWith(
             cards[idx],
-            attackCardIndexes.map((x) => cards[x]),
-            defendCardIndexes.map((x) => cards[x])
+            attackCardIndexes.current.map((x) => cards[x]),
+            defendCardIndexes.current.map((x) => cards[x])
           )
         );
 
@@ -399,8 +457,8 @@ export default function GameScene() {
       if (
         !canAttackWith(
           cards[cardIdx],
-          attackCardIndexes.map((x) => cards[x]),
-          defendCardIndexes.map((x) => cards[x])
+          attackCardIndexes.current.map((x) => cards[x]),
+          defendCardIndexes.current.map((x) => cards[x])
         )
       ) {
         return false;
@@ -423,13 +481,14 @@ export default function GameScene() {
             }
           : pl;
       });
-      setAttackCardIndexes((prev) => [...prev, cardIdx]);
 
       gsap.set(cardRef, { rotateZ: 0 });
 
       const state = Flip.getState(cardRef);
 
-      cardRef.classList.add(styles[`card-attack-${attackCardIndexes.length}`]);
+      cardRef.classList.add(
+        styles[`card-attack-${attackCardIndexes.current.length}`]
+      );
       gsap.set(cardRef, {
         x: 0,
         y: 0,
@@ -443,14 +502,14 @@ export default function GameScene() {
         },
       });
 
+      attackCardIndexes.current = [...attackCardIndexes.current, cardIdx];
+
       return true;
     },
     [
       activePlayerIdx,
       cards,
       userPlayer,
-      attackCardIndexes,
-      defendCardIndexes,
       selectedCardIdx,
       defendingPlayerIdx,
       handleFailedAttack,
@@ -470,7 +529,10 @@ export default function GameScene() {
         assert(selectedCardIdx !== null);
         const def = userPlayer().cardIndexes[selectedCardIdx];
         if (
-          !beats(cards[def], cards[attackCardIndexes[defendCardIndexes.length]])
+          !beats(
+            cards[def],
+            cards[attackCardIndexes.current[defendCardIndexes.current.length]]
+          )
         ) {
           console.log("can't defend with this card");
           return false;
@@ -478,16 +540,17 @@ export default function GameScene() {
         curDefendCardIndexes.push(def);
       } else {
         for (
-          let i = defendCardIndexes.length;
-          i < attackCardIndexes.length;
+          let i = defendCardIndexes.current.length;
+          i < attackCardIndexes.current.length;
           i++
         ) {
           const cardThatBeats = cardIndexes.findIndex((idx) =>
-            beats(cards[idx], cards[attackCardIndexes[i]])
+            beats(cards[idx], cards[attackCardIndexes.current[i]])
           );
 
           if (cardThatBeats < 0) {
             console.log("lost round");
+            handleFailedDefence();
             return false;
           }
 
@@ -498,7 +561,7 @@ export default function GameScene() {
 
       assert(
         curDefendCardIndexes.length ===
-          attackCardIndexes.length - defendCardIndexes.length
+          attackCardIndexes.current.length - defendCardIndexes.current.length
       );
 
       players.current = players.current.map((player) =>
@@ -517,7 +580,6 @@ export default function GameScene() {
           curDefendCardIndexes.includes(i) ? { ...card, isFaceUp: true } : card
         )
       );
-      setDefendCardIndexes((prev) => [...prev, ...curDefendCardIndexes]);
 
       for (let i = 0; i < curDefendCardIndexes.length; i++) {
         const defendCardIdx = curDefendCardIndexes[i];
@@ -530,7 +592,7 @@ export default function GameScene() {
         const state = Flip.getState(cardRef);
 
         cardRef.classList.add(
-          styles[`card-attack-${defendCardIndexes.length + i}`]
+          styles[`card-attack-${defendCardIndexes.current.length + i}`]
         );
         gsap.set(cardRef, {
           x: cardWidth / 3,
@@ -548,17 +610,21 @@ export default function GameScene() {
         });
       }
 
+      defendCardIndexes.current = [
+        ...defendCardIndexes.current,
+        ...curDefendCardIndexes,
+      ];
+
       return true;
     },
     [
-      cards,
-      cardWidth,
-      defendCardIndexes,
-      attackCardIndexes,
       defendingPlayerIdx,
       activePlayerIdx,
       userPlayer,
+      cards,
       selectedCardIdx,
+      handleFailedDefence,
+      cardWidth,
     ]
   );
 
@@ -572,7 +638,7 @@ export default function GameScene() {
         case "ArrowUp":
           if (
             players.current[defendingPlayerIdx] !== userPlayer() &&
-            attackCardIndexes.length === MAX_ATTACK_CARDS
+            attackCardIndexes.current.length === MAX_ATTACK_CARDS
           ) {
             return;
           }
@@ -582,6 +648,13 @@ export default function GameScene() {
           let newSelectedCardIdx: number | null = null;
 
           const isDefended = func(() => {
+            console.log("newSelectedCardIdx:", newSelectedCardIdx);
+
+            if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
+              setActivePlayerIdx(defendingPlayerIdx);
+              return;
+            }
+
             if (newSelectedCardIdx === null) {
               assert(prevActivePlayerIdx.current !== activePlayerIdx);
               const prevIdx = prevActivePlayerIdx.current;
@@ -594,7 +667,8 @@ export default function GameScene() {
           newSelectedCardIdx =
             func === defend &&
             isDefended &&
-            attackCardIndexes.length === defendCardIndexes.length + 1
+            attackCardIndexes.current.length ===
+              defendCardIndexes.current.length
               ? null
               : Math.min(
                   selectedCardIdx,
@@ -603,20 +677,20 @@ export default function GameScene() {
 
           setSelectedCardIdx(newSelectedCardIdx);
 
-          if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
-            setActivePlayerIdx(defendingPlayerIdx);
-          }
-
           setShowHelp(false);
           break;
         case "ArrowDown":
-          if (attackCardIndexes.length !== defendCardIndexes.length) {
+          if (
+            attackCardIndexes.current.length !==
+            defendCardIndexes.current.length
+          ) {
             setSelectedCardIdx(null);
             prevActivePlayerIdx.current = activePlayerIdx;
             setActivePlayerIdx(defendingPlayerIdx);
 
             if (players.current[defendingPlayerIdx] === userPlayer()) {
               console.log("lost round", "(player)");
+              handleFailedDefence();
             }
           } else {
             handleFailedAttack();
@@ -647,12 +721,11 @@ export default function GameScene() {
     selectedCardIdx,
     defendingPlayerIdx,
     userPlayer,
-    attackCardIndexes.length,
     activePlayerIdx,
     defend,
     attack,
-    defendCardIndexes.length,
     setSelectedCardIdx,
+    handleFailedDefence,
     handleFailedAttack,
   ]);
 
