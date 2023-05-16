@@ -1,17 +1,16 @@
-import { Dispatch, MutableRefObject, SetStateAction, useCallback } from "react";
+import { MutableRefObject, useCallback } from "react";
 import { ICard, cardComparator } from "../utils/card";
 import { PLAYER_COUNT, IPlayer } from "../utils/config";
 import { useCardSize } from "./use-card-size";
 import { gsap } from "gsap";
 
 export function useCardSort(
-  players: IPlayer[],
-  setPlayers: Dispatch<SetStateAction<IPlayer[]>>,
+  players: MutableRefObject<IPlayer[]>,
   cardRefs: MutableRefObject<(HTMLDivElement | null)[]>,
   cards: ICard[]
 ) {
-  if (players.length !== PLAYER_COUNT) {
-    throw new Error(`Invalid player count: ${players.length}.`);
+  if (players.current.length !== PLAYER_COUNT) {
+    throw new Error(`Invalid player count: ${players.current.length}.`);
   }
 
   const [cardWidth] = useCardSize();
@@ -20,15 +19,19 @@ export function useCardSort(
     (onComplete: () => void): void => {
       const bottomPlayerIdx = PLAYER_COUNT > 2 ? 2 : 1;
 
-      sort(cardRefsOf(players[bottomPlayerIdx]), "x", players[bottomPlayerIdx]);
-      sort(cardRefsOf(players[0]), "x", players[0]);
+      sort(
+        cardRefsOf(players.current[bottomPlayerIdx]),
+        "x",
+        players.current[bottomPlayerIdx]
+      );
+      sort(cardRefsOf(players.current[0]), "x", players.current[0]);
 
       if (PLAYER_COUNT > 2) {
-        sort(cardRefsOf(players[1]), "y", players[1]);
+        sort(cardRefsOf(players.current[1]), "y", players.current[1]);
       }
 
       if (PLAYER_COUNT > 3) {
-        sort(cardRefsOf(players[3]), "y", players[3]);
+        sort(cardRefsOf(players.current[3]), "y", players.current[3]);
       }
 
       function cardRefsOf(player: IPlayer): (HTMLDivElement | null)[] {
@@ -42,17 +45,15 @@ export function useCardSort(
         translationDir: "x" | "y",
         player: IPlayer
       ): void {
-        setPlayers((prev) =>
-          prev.map((item) =>
-            item === player
-              ? {
-                  ...item,
-                  cardIndexes: item.cardIndexes
-                    .slice()
-                    .sort((a, b) => cardComparator(cards[a], cards[b])),
-                }
-              : item
-          )
+        players.current = players.current.map((item) =>
+          item === player
+            ? {
+                ...item,
+                cardIndexes: item.cardIndexes
+                  .slice()
+                  .sort((a, b) => cardComparator(cards[a], cards[b])),
+              }
+            : item
         );
 
         refs
@@ -81,7 +82,7 @@ export function useCardSort(
           });
       }
     },
-    [cardRefs, cardWidth, cards, players, setPlayers]
+    [cardRefs, cardWidth, cards, players]
   );
 
   return cardSort;
