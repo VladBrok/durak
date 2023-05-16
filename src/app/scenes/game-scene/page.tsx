@@ -29,6 +29,7 @@ import { useCardSort } from "../../../hooks/use-card-sort";
 import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
 
 // TODO: extract some animations to hooks/animations/
+// TODO: use more useRef ?
 
 gsap.registerPlugin(Flip);
 
