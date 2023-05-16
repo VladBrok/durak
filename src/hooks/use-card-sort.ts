@@ -3,6 +3,7 @@ import { ICard, cardComparator } from "../utils/card";
 import { PLAYER_COUNT, IPlayer } from "../utils/config";
 import { useCardSize } from "./use-card-size";
 import { gsap } from "gsap";
+import assert from "assert";
 
 export function useCardSort(
   players: MutableRefObject<IPlayer[]>,
@@ -64,6 +65,8 @@ export function useCardSort(
             )
           )
           .forEach((card, i) => {
+            assert(card);
+
             const translation =
               (i - Math.floor(refs.length / 2)) * (cardWidth / 3);
 
