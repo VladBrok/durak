@@ -308,8 +308,8 @@ export default function CardDistributionAnimation(
       {showSkipAnimationButton && (
         <div className={styles["skip-button"]}>
           <TextButton
-            onClick={() => setShowSkipAnimationButton(false)}
             text="Skip"
+            onClick={() => setShowSkipAnimationButton(false)}
           />
         </div>
       )}

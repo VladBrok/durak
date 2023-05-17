@@ -3,8 +3,10 @@ import styles from "./text-button.module.css";
 import assert from "assert";
 
 export interface ITextButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   text: string;
+  disabled?: boolean;
+  scale?: number;
 }
 
 export default function TextButton(props: ITextButtonProps) {
@@ -22,7 +24,12 @@ export default function TextButton(props: ITextButtonProps) {
   }, [props.text]);
 
   return (
-    <button className={styles["container"]} onClick={props.onClick}>
+    <button
+      className={styles["container"]}
+      onClick={props.onClick}
+      disabled={props.disabled}
+      style={{ "--default-text-button-scale": `${props.scale ?? 1}` }}
+    >
       <svg
         className={styles["text-svg"]}
         width={svgWidth}

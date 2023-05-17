@@ -167,6 +167,72 @@
   z-index: 100;
 }
 
+.durak-hat-left {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 100;
+  margin: 10px;
+}
+
+.durak-hat-right {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%) translateX(-100%);
+  z-index: 100;
+  margin: 10px;
+}
+
+.durak-hat-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  margin: 10px;
+}
+
+.durak-hat-bottom {
+  position: absolute;
+  top: calc(100% - var(--card-height) / 2);
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  z-index: 100;
+  margin: 10px;
+}
+
+.game-over-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 150;
+}
+
+.game-over-screen-content {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  opacity: 0;
+  display: none;
+  z-index: 120;
+}
+
 .hidden {
   display: none;
 }

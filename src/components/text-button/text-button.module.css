@@ -2,14 +2,15 @@
   display: block;
   background: transparent;
   border: none;
+  --default-text-button-scale: 1;
+}
+
+.container {
+  transform: scale(var(--default-text-button-scale));
 }
 
 .container:not(:disabled):hover {
-  transform: scale(1.1);
-}
-
-.container:not(:disabled):active {
-  transform: scale(1);
+  transform: scale(calc(var(--default-text-button-scale) + 0.1));
 }
 
 .text-svg {
