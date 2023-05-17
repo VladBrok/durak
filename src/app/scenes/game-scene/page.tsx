@@ -28,6 +28,7 @@ import { useCardSize } from "../../../hooks/use-card-size";
 import CardDistributionAnimation from "../../../components/card-distribution-animation/card-distribution-animation";
 import { useCardSort } from "../../../hooks/use-card-sort";
 import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
+import { getShieldCssClass } from "../../../utils/get-shield-css-class";
 
 // TODO: extract some animations to hooks/animations/
 // TODO: use more useRef ?
@@ -39,6 +40,7 @@ export default function GameScene() {
   const [cards, setCards] = useState<ICard[]>(DECK);
   const players = useRef<IPlayer[]>(PLAYERS);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const shieldRef = useRef<HTMLDivElement | null>(null);
   const attackCardIndexes = useRef<number[]>([]);
   const defendCardIndexes = useRef<number[]>([]);
   const discardedCardIndexes = useRef<number[]>([]);
@@ -48,6 +50,7 @@ export default function GameScene() {
   const [activePlayerIdx, setActivePlayerIdx] = useState(0);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [forceBotAttack, setForceBotAttack] = useState(false);
+  const [isRoundLost, setIsRoundLost] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
   const suitWidth = cardWidth / 2;
@@ -323,6 +326,7 @@ export default function GameScene() {
     giveCardsToEachPlayer(() => {
       sortCards(() => {
         changeAttackingAndDefendingPlayers();
+        setIsRoundLost(false);
       });
     });
   }, [
@@ -342,6 +346,8 @@ export default function GameScene() {
   }, [discardCards, nextRound, setSelectedCardIdx]);
 
   const handleFailedDefence = useCallback(() => {
+    setIsRoundLost(true);
+
     const defendingPlayer = players.current[defendingPlayerIdx];
 
     const attackAndDefendCardIndexes = [
@@ -782,7 +788,12 @@ export default function GameScene() {
 
   // Bot attack/defence
   useEffect(() => {
-    console.log("bot 0");
+    console.log(
+      "bot 0",
+      !isGameStarted,
+      prevActivePlayerIdx.current === activePlayerIdx && !forceBotAttack,
+      players.current[activePlayerIdx] === userPlayer()
+    );
 
     if (
       !isGameStarted ||
@@ -810,11 +821,19 @@ export default function GameScene() {
         assert(prevIdx !== activePlayerIdx);
         setActivePlayerIdx(prevIdx);
         if (players.current[prevIdx] === userPlayer()) {
-          setSelectedCardIdx(0);
+          if (!players.current[prevIdx].cardIndexes.length) {
+            handleFailedAttack();
+          } else {
+            setSelectedCardIdx(0);
+          }
         }
       });
     } else {
       attack(() => {
+        assert(
+          players.current[defendingPlayerIdx].cardIndexes.length >=
+            attackCardIndexes.current.length - defendCardIndexes.current.length
+        );
         setActivePlayerIdx(defendingPlayerIdx);
         if (players.current[defendingPlayerIdx] === userPlayer()) {
           setSelectedCardIdx(0);
@@ -830,7 +849,19 @@ export default function GameScene() {
     defend,
     forceBotAttack,
     setSelectedCardIdx,
+    handleFailedAttack,
   ]);
+
+  useEffect(() => {
+    if (!isGameStarted || !shieldRef.current) {
+      return;
+    }
+
+    shieldRef.current.className = "";
+    shieldRef.current.classList.add(
+      getShieldCssClass(players.current[defendingPlayerIdx].cardCssClassName)
+    );
+  }, [defendingPlayerIdx, isGameStarted]);
 
   const cardsToShow = useMemo<(ICard | null)[]>(
     () =>
@@ -875,6 +906,19 @@ export default function GameScene() {
         </div>
       )}
 
+      <div ref={shieldRef} className={styles["hidden"]}>
+        <Image
+          src={
+            isRoundLost
+              ? "/images/shield-broken.png"
+              : "/images/shield-regular.png"
+          }
+          width={suitWidth}
+          height={suitHeight}
+          alt=""
+        />
+      </div>
+
       {showHelp && (
         <div className={styles.help}>
           <div className={styles.instruction}>Up arrow - use card</div>
@@ -892,8 +936,8 @@ export default function GameScene() {
         styles={styles}
         sortCards={() =>
           sortCards(() => {
-            setActivePlayerIdx(2);
-            setAttackingPlayerIdx(2);
+            setActivePlayerIdx(1);
+            setAttackingPlayerIdx(1);
             setDefendingPlayerIdx(0);
 
             setSelectedCardIdx(0);

@@ -134,3 +134,39 @@
   transform: translate(-50%, -50%);
   z-index: 50;
 }
+
+.shield-left {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+.shield-right {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%) translateX(-100%);
+  z-index: 100;
+}
+
+.shield-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+.shield-bottom {
+  position: absolute;
+  top: calc(100% - var(--card-height) / 2);
+  left: 50%;
+  transform: translateY(-50%) translateX(-50%);
+  z-index: 100;
+}
+
+.hidden {
+  display: none;
+}
