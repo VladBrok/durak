@@ -32,6 +32,10 @@ export function getImageSrc(card: ICard): string {
   return `/images/cards/${card.suit.toLowerCase()}-${card.rank}.png`;
 }
 
+export function getSuitImageSrc(card: ICard): string {
+  return `/images/suits/${card.suit.toLowerCase()}.png`;
+}
+
 export function makeShuffledDeck(): ICard[] {
   const cards: (ICard | null)[] = Array(CARD_COUNT).fill(null);
   let cardIdx = 0;

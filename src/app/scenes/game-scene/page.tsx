@@ -12,6 +12,7 @@ import {
   canAttackWith,
   cardComparator,
   getImageSrc,
+  getSuitImageSrc,
 } from "../../../utils/card";
 import assert from "assert";
 import {
@@ -48,6 +49,9 @@ export default function GameScene() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [forceBotAttack, setForceBotAttack] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
+
+  const suitWidth = cardWidth / 2;
+  const suitHeight = cardHeight / 2.5;
 
   const userPlayer = useCallback(
     () => players.current.find((pl) => pl.isUser)!,
@@ -860,6 +864,17 @@ export default function GameScene() {
           ))}
       </div>
 
+      {isGameStarted && (
+        <div className={styles["trump-suit"]}>
+          <Image
+            src={getSuitImageSrc(cards.find((card) => card.isTrump)!)}
+            width={suitWidth}
+            height={suitHeight}
+            alt=""
+          />
+        </div>
+      )}
+
       {showHelp && (
         <div className={styles.help}>
           <div className={styles.instruction}>Up arrow - use card</div>
@@ -877,8 +892,8 @@ export default function GameScene() {
         styles={styles}
         sortCards={() =>
           sortCards(() => {
-            setActivePlayerIdx(1);
-            setAttackingPlayerIdx(1);
+            setActivePlayerIdx(2);
+            setAttackingPlayerIdx(2);
             setDefendingPlayerIdx(0);
 
             setSelectedCardIdx(0);

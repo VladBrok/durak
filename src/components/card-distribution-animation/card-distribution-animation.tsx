@@ -219,6 +219,9 @@ export default function CardDistributionAnimation(
           {
             x: () => (cardHeight - cardWidth) / 2,
             rotateZ: 90,
+            onComplete: () => {
+              props.setTrump();
+            },
           }
         );
 
@@ -284,7 +287,6 @@ export default function CardDistributionAnimation(
         );
 
         setTweens((prev) => [...prev, tl]);
-        props.setTrump();
       },
     });
 
