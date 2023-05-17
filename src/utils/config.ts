@@ -12,8 +12,8 @@ export interface IPlayer {
 
 export const MAX_ATTACK_CARDS = 6;
 export const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
-export const PLAYER_COUNT = 2;
-export const CARDS_PER_PLAYER = 1;
+export const PLAYER_COUNT = 4;
+export const CARDS_PER_PLAYER = 6;
 export const DECK = makeShuffledDeck();
 export const PLAYERS = Array(PLAYER_COUNT)
   .fill(null)

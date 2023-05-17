@@ -70,10 +70,11 @@ export function useCardSort(
             const translation =
               (i - Math.floor(refs.length / 2)) * (cardWidth / 3);
 
+            assert(!Number.isNaN(translation));
+
             gsap.set(card, { zIndex: i });
 
             const tl = gsap.timeline({ defaults: { duration: 0.7 } });
-            tl.to(card, { [translationDir]: 0 });
             tl.to(card, {
               [translationDir]: translation,
               ...(i === refs.length - 1 && {
