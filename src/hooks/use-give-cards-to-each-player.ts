@@ -14,13 +14,15 @@ import { Flip } from "gsap/all";
 export function useGiveCardsToEachPlayer(
   players: MutableRefObject<IPlayer[]>,
   cardRefs: (HTMLDivElement | null)[],
-  indexesOfCardsInUse: number[],
+  getIndexesOfCardsInUse: () => number[],
   attackingPlayerIdx: number,
   defendingPlayerIdx: number,
   setCards: Dispatch<SetStateAction<ICard[]>>
 ) {
   const giveCardsToEachPlayer = useCallback(
     (onComplete?: () => void) => {
+      const indexesOfCardsInUse = getIndexesOfCardsInUse();
+
       const indexesOfAvailableCards = Array(CARD_COUNT)
         .fill(0)
         .map((_, i) => i)
@@ -129,7 +131,7 @@ export function useGiveCardsToEachPlayer(
       attackingPlayerIdx,
       cardRefs,
       defendingPlayerIdx,
-      indexesOfCardsInUse,
+      getIndexesOfCardsInUse,
       players,
       setCards,
     ]

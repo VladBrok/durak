@@ -191,16 +191,19 @@ export default function GameScene() {
     }
   }, [attackingPlayerIdx, defendingPlayerIdx, setSelectedCardIdx]);
 
-  const giveCardsToEachPlayer = useGiveCardsToEachPlayer(
-    players,
-    cardRefs.current,
-    // TODO: extract this array
-    [
+  const getIndexesOfCardsInUse = useCallback(() => {
+    return [
       ...attackCardIndexes.current,
       ...defendCardIndexes.current,
       ...discardedCardIndexes.current,
       ...players.current.flatMap((player) => player.cardIndexes),
-    ],
+    ];
+  }, []);
+
+  const giveCardsToEachPlayer = useGiveCardsToEachPlayer(
+    players,
+    cardRefs.current,
+    getIndexesOfCardsInUse,
     attackingPlayerIdx,
     defendingPlayerIdx,
     setCards
