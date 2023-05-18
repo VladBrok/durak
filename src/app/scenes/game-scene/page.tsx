@@ -67,6 +67,20 @@ export default function GameScene() {
   );
   const sortCards = useCardSort(players, cardRefs, cards);
 
+  // TODO: set indexes differently
+  function startGame(): void {
+    sortCards(() => {
+      setActivePlayerIdx(1);
+      setAttackingPlayerIdx(1);
+      setDefendingPlayerIdx(0);
+
+      setSelectedCardIdx(0);
+
+      setShowHelp(true);
+      setIsGameStarted(true);
+    });
+  }
+
   function setTrump(): void {
     assert(cards.every((card) => !card.isTrump));
 
@@ -921,18 +935,7 @@ export default function GameScene() {
 
       <CardDistributionAnimation
         styles={styles}
-        sortCards={() =>
-          sortCards(() => {
-            setActivePlayerIdx(1);
-            setAttackingPlayerIdx(1);
-            setDefendingPlayerIdx(0);
-
-            setSelectedCardIdx(0);
-
-            setShowHelp(true);
-            setIsGameStarted(true);
-          })
-        }
+        sortCards={startGame}
         setTrump={setTrump}
         revealUserCards={revealUserCards}
       />
