@@ -32,6 +32,7 @@ import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
 import GameOverScreen from "../../../components/game-over-screen/game-over-screen";
 import Shield from "../../../components/shield/shield";
 import { useCheckGameOver } from "../../../utils/use-check-game-over";
+import { takeAvailableCardsFor } from "../../../utils/take-available-cards-for-player";
 
 // TODO: use more useRef ?
 
@@ -218,11 +219,13 @@ export default function GameScene() {
       }
 
       const cardIndexesForAttacker = takeAvailableCardsFor(
-        players.current[attackingPlayerIdx]
+        players.current[attackingPlayerIdx],
+        indexesOfAvailableCards
       );
 
       const cardIndexesForDefender = takeAvailableCardsFor(
-        players.current[defendingPlayerIdx]
+        players.current[defendingPlayerIdx],
+        indexesOfAvailableCards
       );
 
       const additionalCardIndexes: number[][] = Array(PLAYER_COUNT)
@@ -232,7 +235,7 @@ export default function GameScene() {
             ? cardIndexesForAttacker
             : i === defendingPlayerIdx
             ? cardIndexesForDefender
-            : takeAvailableCardsFor(players.current[i])
+            : takeAvailableCardsFor(players.current[i], indexesOfAvailableCards)
         );
 
       const newPlayers = players.current.map((player, i) => {
@@ -300,19 +303,6 @@ export default function GameScene() {
             animate(cur + 1, allPlayerIndexes);
           }
         }
-      }
-
-      function takeAvailableCardsFor(player: IPlayer): number[] {
-        const needed = Math.max(
-          0,
-          CARDS_PER_PLAYER - player.cardIndexes.length
-        );
-
-        if (!needed) {
-          return [];
-        }
-
-        return indexesOfAvailableCards.splice(-needed, needed);
       }
     },
     [attackingPlayerIdx, defendingPlayerIdx, userPlayer]
