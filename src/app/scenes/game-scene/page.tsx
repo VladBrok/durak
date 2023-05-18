@@ -35,6 +35,7 @@ import { useCheckGameOver } from "../../../hooks/use-check-game-over";
 import { useGiveCardsToEachPlayer } from "../../../hooks/use-give-cards-to-each-player";
 import { userPlayer } from "../../../utils/user-player";
 import { useHandleFailedDefence } from "../../../hooks/use-handle-failed-defence";
+import { useDiscardCards } from "../../../hooks/use-discard-cards";
 
 // TODO: use more useRef ?
 
@@ -109,54 +110,13 @@ export default function GameScene() {
     );
   }
 
-  const discardCards = useCallback(
-    (onComplete?: () => void) => {
-      discardedCardIndexes.current = [
-        ...discardedCardIndexes.current,
-        ...attackCardIndexes.current,
-        ...defendCardIndexes.current,
-      ];
-
-      const attackAndDefendRefs = [
-        ...attackCardIndexes.current,
-        ...defendCardIndexes.current,
-      ].map((idx) => cardRefs.current[idx]);
-
-      const attackAndDefendCards = [
-        ...attackCardIndexes.current,
-        ...defendCardIndexes.current,
-      ].map((idx) => cards[idx]);
-
-      setCards((prev) =>
-        prev.map((card) =>
-          attackAndDefendCards.includes(card)
-            ? { ...card, isFaceUp: false }
-            : card
-        )
-      );
-      attackCardIndexes.current = [];
-      defendCardIndexes.current = [];
-
-      const state = Flip.getState(attackAndDefendRefs);
-
-      gsap.set(attackAndDefendRefs, {
-        x: 0,
-        y: 0,
-      });
-      attackAndDefendRefs.forEach((el) => {
-        assert(el);
-        el.className = "";
-        el.classList.add(styles["card-discarded"]);
-      });
-
-      Flip.from(state, {
-        duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
-        onComplete: () => {
-          onComplete?.();
-        },
-      });
-    },
-    [cards]
+  const discardCards = useDiscardCards(
+    styles["card-discarded"],
+    cardRefs.current,
+    setCards,
+    attackCardIndexes,
+    defendCardIndexes,
+    discardedCardIndexes
   );
 
   const checkGameOver = useCheckGameOver(players.current, activePlayerIdx);
