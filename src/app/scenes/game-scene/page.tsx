@@ -4,14 +4,7 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/all";
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CARD_COUNT,
   ICard,
@@ -36,9 +29,7 @@ import CardDistributionAnimation from "../../../components/card-distribution-ani
 import { useCardSort } from "../../../hooks/use-card-sort";
 import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
 import { getShieldCssClass } from "../../../utils/get-shield-css-class";
-import { getDurakHatCssClass } from "../../../utils/get-durak-hat-css-class";
-import TextButton from "../../../components/text-button/text-button";
-import RemountContext from "../../../context/remount-context";
+import GameOverScreen from "../../../components/game-over-screen/game-over-screen";
 
 // TODO: extract some animations to hooks/animations/
 // TODO: use more useRef ?
@@ -51,7 +42,6 @@ export default function GameScene() {
   const players = useRef<IPlayer[]>(PLAYERS);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const shieldRef = useRef<HTMLDivElement | null>(null);
-  const durakHatRef = useRef<HTMLDivElement | null>(null);
   const attackCardIndexes = useRef<number[]>([]);
   const defendCardIndexes = useRef<number[]>([]);
   const discardedCardIndexes = useRef<number[]>([]);
@@ -60,17 +50,13 @@ export default function GameScene() {
   const [attackingPlayerIdx, setAttackingPlayerIdx] = useState(0);
   const [activePlayerIdx, setActivePlayerIdx] = useState(0);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [lostPlayer, setLostPlayer] = useState<IPlayer | null>(null);
   const [forceBotAttack, setForceBotAttack] = useState(false);
   const [isRoundLost, setIsRoundLost] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
-  const remount = useContext(RemountContext);
-
   const suitWidth = cardWidth / 2;
   const suitHeight = cardHeight / 2.5;
-  const durakHatWidth = cardWidth * 2;
-  const durakHatHeight = cardWidth;
 
   const userPlayer = useCallback(
     () => players.current.find((pl) => pl.isUser)!,
@@ -160,41 +146,6 @@ export default function GameScene() {
     [cards]
   );
 
-  const gameOver = useCallback((lostPlayer: IPlayer) => {
-    const timeline = gsap.timeline();
-
-    assert(durakHatRef.current);
-
-    durakHatRef.current.className = "";
-    durakHatRef.current.classList.add(
-      getDurakHatCssClass(lostPlayer?.cardCssClassName)
-    );
-
-    timeline.fromTo(
-      durakHatRef.current.querySelector("img"),
-      {
-        scale: 0,
-      },
-      { scale: 1, ease: "elastic.out(1, 0.3)", duration: 2 }
-    );
-
-    timeline.fromTo(
-      `.${styles.overlay}`,
-      {
-        display: "block",
-        opacity: 0,
-      },
-      {
-        opacity: 0.4,
-        onComplete: () => {
-          setTimeout(() => {
-            setIsGameOver(true);
-          }, 500);
-        },
-      }
-    );
-  }, []);
-
   const checkGameOver = useCallback((): boolean => {
     const playersWithCards = players.current.filter(
       (player) => player.cardIndexes.length
@@ -202,18 +153,18 @@ export default function GameScene() {
 
     if (playersWithCards.length === 1) {
       console.log("durak:", playersWithCards[0]);
-      gameOver(playersWithCards[0]);
+      setLostPlayer(playersWithCards[0]);
       return true;
     }
 
     if (playersWithCards.length === 0) {
       console.log("durak:", playersWithCards[activePlayerIdx]);
-      gameOver(playersWithCards[activePlayerIdx]);
+      setLostPlayer(playersWithCards[activePlayerIdx]);
       return true;
     }
 
     return false;
-  }, [activePlayerIdx, gameOver]);
+  }, [activePlayerIdx]);
 
   const changeAttackingAndDefendingPlayers = useCallback(() => {
     assert(
@@ -931,16 +882,7 @@ export default function GameScene() {
 
   return (
     <>
-      {isGameOver && (
-        <div className={styles["game-over-screen"]}>
-          <div className={styles["game-over-screen-content"]}>
-            <TextButton text="Game Over" disabled scale={1.6} />
-            <TextButton text="Play again" onClick={remount} />
-          </div>
-        </div>
-      )}
-
-      <div className={styles.overlay}></div>
+      <GameOverScreen lostPlayer={lostPlayer} />
 
       <div>
         {cardWidth &&
@@ -981,15 +923,6 @@ export default function GameScene() {
           }
           width={suitWidth}
           height={suitHeight}
-          alt=""
-        />
-      </div>
-
-      <div ref={durakHatRef} className={styles["hidden"]}>
-        <Image
-          src="/images/durak-hat.png"
-          width={durakHatWidth}
-          height={durakHatHeight}
           alt=""
         />
       </div>
