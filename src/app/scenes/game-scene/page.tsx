@@ -31,7 +31,7 @@ import { useCardSort } from "../../../hooks/use-card-sort";
 import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
 import GameOverScreen from "../../../components/game-over-screen/game-over-screen";
 import Shield from "../../../components/shield/shield";
-import { useCheckGameOver } from "../../../utils/use-check-game-over";
+import { useCheckGameOver } from "../../../hooks/use-check-game-over";
 import { takeAvailableCardsFor } from "../../../utils/take-available-cards-for-player";
 
 // TODO: use more useRef ?

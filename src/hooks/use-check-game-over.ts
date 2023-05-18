@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { IPlayer } from "./config";
+import { IPlayer } from "../utils/config";
 
 export function useCheckGameOver(players: IPlayer[], activePlayerIdx: number) {
   const checkGameOver = useCallback((): IPlayer | null => {
