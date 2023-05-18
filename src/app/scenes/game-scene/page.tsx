@@ -30,6 +30,7 @@ import { useCardSort } from "../../../hooks/use-card-sort";
 import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
 import GameOverScreen from "../../../components/game-over-screen/game-over-screen";
 import Shield from "../../../components/shield/shield";
+import { useCheckGameOver } from "../../../utils/use-check-game-over";
 
 // TODO: extract some animations to hooks/animations/
 // TODO: use more useRef ?
@@ -159,25 +160,7 @@ export default function GameScene() {
     [cards]
   );
 
-  const checkGameOver = useCallback((): boolean => {
-    const playersWithCards = players.current.filter(
-      (player) => player.cardIndexes.length
-    );
-
-    if (playersWithCards.length === 1) {
-      console.log("durak:", playersWithCards[0]);
-      setLostPlayer(playersWithCards[0]);
-      return true;
-    }
-
-    if (playersWithCards.length === 0) {
-      console.log("durak:", players.current[activePlayerIdx]);
-      setLostPlayer(players.current[activePlayerIdx]);
-      return true;
-    }
-
-    return false;
-  }, [activePlayerIdx]);
+  const checkGameOver = useCheckGameOver(players.current, activePlayerIdx);
 
   const changeAttackingAndDefendingPlayers = useCallback(() => {
     assert(
@@ -336,7 +319,9 @@ export default function GameScene() {
   );
 
   const nextRound = useCallback(() => {
-    if (checkGameOver()) {
+    const loser = checkGameOver();
+    if (loser) {
+      setLostPlayer(loser);
       return;
     }
 
