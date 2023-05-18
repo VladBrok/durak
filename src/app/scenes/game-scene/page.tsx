@@ -32,7 +32,8 @@ import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
 import GameOverScreen from "../../../components/game-over-screen/game-over-screen";
 import Shield from "../../../components/shield/shield";
 import { useCheckGameOver } from "../../../hooks/use-check-game-over";
-import { takeAvailableCardsFor } from "../../../utils/take-available-cards-for-player";
+import { useGiveCardsToEachPlayer } from "../../../hooks/use-give-cards-to-each-player";
+import { userPlayer } from "../../../utils/user-player";
 
 // TODO: use more useRef ?
 
@@ -59,13 +60,9 @@ export default function GameScene() {
   const suitWidth = cardWidth / 2;
   const suitHeight = cardHeight / 2.5;
 
-  const userPlayer = useCallback(
-    () => players.current.find((pl) => pl.isUser)!,
-    []
-  );
   const [selectedCardIdx, setSelectedCardIdx] = useSelectedCardIdx(
     cardRefs,
-    userPlayer
+    () => userPlayer(players.current)
   );
   const sortCards = useCardSort(players, cardRefs, cards);
 
@@ -104,7 +101,7 @@ export default function GameScene() {
   function revealUserCards(): void {
     setCards((prev) =>
       prev.map((card, i) =>
-        userPlayer().cardIndexes.some((idx) => i === idx)
+        userPlayer(players.current).cardIndexes.some((idx) => i === idx)
           ? { ...card, isFaceUp: true }
           : card
       )
@@ -187,125 +184,26 @@ export default function GameScene() {
     setActivePlayerIdx(attackingIdx);
     setDefendingPlayerIdx(defendingIdx);
 
-    if (players.current[attackingIdx] === userPlayer()) {
+    if (players.current[attackingIdx] === userPlayer(players.current)) {
       setSelectedCardIdx(0);
     } else {
       setForceBotAttack(true);
     }
-  }, [attackingPlayerIdx, defendingPlayerIdx, setSelectedCardIdx, userPlayer]);
+  }, [attackingPlayerIdx, defendingPlayerIdx, setSelectedCardIdx]);
 
-  const giveCardsToEachPlayer = useCallback(
-    (onComplete?: () => void) => {
-      const indexesOfCardsInUse = [
-        ...attackCardIndexes.current,
-        ...defendCardIndexes.current,
-        ...discardedCardIndexes.current,
-        ...players.current.flatMap((player) => player.cardIndexes),
-      ];
-      const indexesOfAvailableCards = Array(CARD_COUNT)
-        .fill(0)
-        .map((_, i) => i)
-        .filter((i) => !indexesOfCardsInUse.includes(i));
-
-      assert(
-        indexesOfAvailableCards.length + indexesOfCardsInUse.length ===
-          CARD_COUNT
-      );
-
-      if (!indexesOfAvailableCards.length) {
-        console.log("no cards available");
-        onComplete?.();
-        return;
-      }
-
-      const cardIndexesForAttacker = takeAvailableCardsFor(
-        players.current[attackingPlayerIdx],
-        indexesOfAvailableCards
-      );
-
-      const cardIndexesForDefender = takeAvailableCardsFor(
-        players.current[defendingPlayerIdx],
-        indexesOfAvailableCards
-      );
-
-      const additionalCardIndexes: number[][] = Array(PLAYER_COUNT)
-        .fill(0)
-        .map((_, i) =>
-          i === attackingPlayerIdx
-            ? cardIndexesForAttacker
-            : i === defendingPlayerIdx
-            ? cardIndexesForDefender
-            : takeAvailableCardsFor(players.current[i], indexesOfAvailableCards)
-        );
-
-      const newPlayers = players.current.map((player, i) => {
-        return {
-          ...player,
-          cardIndexes: [...player.cardIndexes, ...additionalCardIndexes[i]],
-        };
-      });
-      players.current = newPlayers;
-
-      animate(0, [
-        attackingPlayerIdx,
-        defendingPlayerIdx,
-        ...Array(PLAYER_COUNT)
-          .fill(0)
-          .map((_, i) => i)
-          .filter((i) => i !== attackingPlayerIdx && i !== defendingPlayerIdx),
-      ]);
-
-      function animate(cur: number, allPlayerIndexes: number[]): void {
-        const playerIdx = allPlayerIndexes[cur];
-
-        if (!additionalCardIndexes[playerIdx].length) {
-          handleAnimationComplete();
-          return;
-        }
-
-        setCards((prev) =>
-          prev.map((card, i) =>
-            additionalCardIndexes[playerIdx].includes(i)
-              ? {
-                  ...card,
-                  isFaceUp: players.current[playerIdx] === userPlayer(),
-                }
-              : card
-          )
-        );
-
-        const refs = additionalCardIndexes[playerIdx].map(
-          (idx) => cardRefs.current[idx]
-        );
-
-        gsap.set(refs, {
-          rotateZ: players.current[playerIdx].cardRotateZ,
-        });
-
-        const state = Flip.getState(refs);
-
-        refs.forEach((ref) => {
-          assert(ref);
-          ref.className = "";
-          ref.classList.add(players.current[playerIdx].cardCssClassName);
-        });
-
-        Flip.from(state, {
-          duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
-          stagger: 0.2,
-          onComplete: handleAnimationComplete,
-        });
-
-        function handleAnimationComplete(): void {
-          if (cur === allPlayerIndexes.length - 1) {
-            onComplete?.();
-          } else {
-            animate(cur + 1, allPlayerIndexes);
-          }
-        }
-      }
-    },
-    [attackingPlayerIdx, defendingPlayerIdx, userPlayer]
+  const giveCardsToEachPlayer = useGiveCardsToEachPlayer(
+    players,
+    cardRefs.current,
+    // TODO: extract this array
+    [
+      ...attackCardIndexes.current,
+      ...defendCardIndexes.current,
+      ...discardedCardIndexes.current,
+      ...players.current.flatMap((player) => player.cardIndexes),
+    ],
+    attackingPlayerIdx,
+    defendingPlayerIdx,
+    setCards
   );
 
   const nextRound = useCallback(() => {
@@ -365,7 +263,9 @@ export default function GameScene() {
         attackAndDefendCardIndexes.includes(i)
           ? {
               ...card,
-              isFaceUp: players.current[defendingPlayerIdx] === userPlayer(),
+              isFaceUp:
+                players.current[defendingPlayerIdx] ===
+                userPlayer(players.current),
             }
           : card
       )
@@ -394,7 +294,7 @@ export default function GameScene() {
         nextRound();
       },
     });
-  }, [defendingPlayerIdx, nextRound, userPlayer]);
+  }, [defendingPlayerIdx, nextRound]);
 
   const handleFailedAttack = useCallback(() => {
     setSelectedCardIdx(null);
@@ -429,7 +329,7 @@ export default function GameScene() {
       handleSuccessfulDefence();
     } else {
       setActivePlayerIdx(nextActiveIdx);
-      if (players.current[nextActiveIdx] === userPlayer()) {
+      if (players.current[nextActiveIdx] === userPlayer(players.current)) {
         setSelectedCardIdx(0);
       }
     }
@@ -439,7 +339,6 @@ export default function GameScene() {
     defendingPlayerIdx,
     attackingPlayerIdx,
     handleSuccessfulDefence,
-    userPlayer,
   ]);
 
   const isMaxAttackCardsReached = useCallback(() => {
@@ -466,11 +365,13 @@ export default function GameScene() {
       const player = players.current[activePlayerIdx];
       let cardIdx = 0;
 
-      if (player === userPlayer()) {
+      if (player === userPlayer(players.current)) {
         assert(selectedCardIdx !== null);
         assert(selectedCardIdx >= 0);
-        assert(selectedCardIdx < userPlayer().cardIndexes.length);
-        cardIdx = userPlayer().cardIndexes[selectedCardIdx];
+        assert(
+          selectedCardIdx < userPlayer(players.current).cardIndexes.length
+        );
+        cardIdx = userPlayer(players.current).cardIndexes[selectedCardIdx];
       } else {
         const idx = player.cardIndexes.find((idx) =>
           canAttackWith(
@@ -546,7 +447,6 @@ export default function GameScene() {
       activePlayerIdx,
       defendingPlayerIdx,
       isMaxAttackCardsReached,
-      userPlayer,
       cards,
       handleFailedAttack,
       selectedCardIdx,
@@ -562,9 +462,9 @@ export default function GameScene() {
         .sort((a, b) => cardComparator(cards[a], cards[b]));
       const curDefendCardIndexes: number[] = [];
 
-      if (players.current[defendingPlayerIdx] === userPlayer()) {
+      if (players.current[defendingPlayerIdx] === userPlayer(players.current)) {
         assert(selectedCardIdx !== null);
-        const def = userPlayer().cardIndexes[selectedCardIdx];
+        const def = userPlayer(players.current).cardIndexes[selectedCardIdx];
         if (
           !beats(
             cards[def],
@@ -657,7 +557,6 @@ export default function GameScene() {
     [
       defendingPlayerIdx,
       activePlayerIdx,
-      userPlayer,
       cards,
       selectedCardIdx,
       handleFailedDefence,
@@ -675,7 +574,8 @@ export default function GameScene() {
       switch (e.key) {
         case "ArrowUp":
           if (
-            players.current[defendingPlayerIdx] !== userPlayer() &&
+            players.current[defendingPlayerIdx] !==
+              userPlayer(players.current) &&
             isMaxAttackCardsReached()
           ) {
             return;
@@ -712,7 +612,8 @@ export default function GameScene() {
               ? null
               : Math.min(
                   selectedCardIdx,
-                  userPlayer().cardIndexes.length - (isDefended ? 2 : 1)
+                  userPlayer(players.current).cardIndexes.length -
+                    (isDefended ? 2 : 1)
                 );
 
           setSelectedCardIdx(newSelectedCardIdx);
@@ -728,7 +629,10 @@ export default function GameScene() {
             prevActivePlayerIdx.current = activePlayerIdx;
             setActivePlayerIdx(defendingPlayerIdx);
 
-            if (players.current[defendingPlayerIdx] === userPlayer()) {
+            if (
+              players.current[defendingPlayerIdx] ===
+              userPlayer(players.current)
+            ) {
               console.log("lost round", "(player)");
               handleFailedDefence();
             }
@@ -742,14 +646,15 @@ export default function GameScene() {
         case "ArrowLeft": {
           const nextIdx =
             selectedCardIdx <= 0
-              ? userPlayer().cardIndexes.length - 1
+              ? userPlayer(players.current).cardIndexes.length - 1
               : selectedCardIdx - 1;
           setSelectedCardIdx(nextIdx);
           break;
         }
         case "ArrowRight": {
           const nextIdx =
-            (selectedCardIdx + 1) % userPlayer().cardIndexes.length;
+            (selectedCardIdx + 1) %
+            userPlayer(players.current).cardIndexes.length;
           setSelectedCardIdx(nextIdx);
           break;
         }
@@ -760,7 +665,6 @@ export default function GameScene() {
   }, [
     selectedCardIdx,
     defendingPlayerIdx,
-    userPlayer,
     isMaxAttackCardsReached,
     activePlayerIdx,
     defend,
@@ -784,13 +688,13 @@ export default function GameScene() {
       "bot 0",
       !isGameStarted,
       prevActivePlayerIdx.current === activePlayerIdx && !forceBotAttack,
-      players.current[activePlayerIdx] === userPlayer()
+      players.current[activePlayerIdx] === userPlayer(players.current)
     );
 
     if (
       !isGameStarted ||
       (prevActivePlayerIdx.current === activePlayerIdx && !forceBotAttack) ||
-      players.current[activePlayerIdx] === userPlayer()
+      players.current[activePlayerIdx] === userPlayer(players.current)
     ) {
       return;
     }
@@ -812,7 +716,7 @@ export default function GameScene() {
         assert(prevIdx !== null);
         assert(prevIdx !== activePlayerIdx);
         setActivePlayerIdx(prevIdx);
-        if (players.current[prevIdx] === userPlayer()) {
+        if (players.current[prevIdx] === userPlayer(players.current)) {
           if (!players.current[prevIdx].cardIndexes.length) {
             handleFailedAttack();
           } else {
@@ -827,7 +731,9 @@ export default function GameScene() {
             attackCardIndexes.current.length - defendCardIndexes.current.length
         );
         setActivePlayerIdx(defendingPlayerIdx);
-        if (players.current[defendingPlayerIdx] === userPlayer()) {
+        if (
+          players.current[defendingPlayerIdx] === userPlayer(players.current)
+        ) {
           setSelectedCardIdx(0);
         }
       });
@@ -836,7 +742,6 @@ export default function GameScene() {
     activePlayerIdx,
     attack,
     isGameStarted,
-    userPlayer,
     defendingPlayerIdx,
     defend,
     forceBotAttack,
