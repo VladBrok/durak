@@ -171,8 +171,8 @@ export default function GameScene() {
     }
 
     if (playersWithCards.length === 0) {
-      console.log("durak:", playersWithCards[activePlayerIdx]);
-      setLostPlayer(playersWithCards[activePlayerIdx]);
+      console.log("durak:", players.current[activePlayerIdx]);
+      setLostPlayer(players.current[activePlayerIdx]);
       return true;
     }
 
