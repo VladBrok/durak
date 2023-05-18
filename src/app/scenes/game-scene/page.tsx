@@ -34,6 +34,7 @@ import Shield from "../../../components/shield/shield";
 import { useCheckGameOver } from "../../../hooks/use-check-game-over";
 import { useGiveCardsToEachPlayer } from "../../../hooks/use-give-cards-to-each-player";
 import { userPlayer } from "../../../utils/user-player";
+import { useHandleFailedDefence } from "../../../hooks/use-handle-failed-defence";
 
 // TODO: use more useRef ?
 
@@ -238,66 +239,20 @@ export default function GameScene() {
     });
   }, [discardCards, nextRound, setSelectedCardIdx]);
 
+  const failedDefenceHandler = useHandleFailedDefence(
+    players,
+    defendingPlayerIdx,
+    setCards,
+    cardRefs.current,
+    attackCardIndexes,
+    defendCardIndexes,
+    nextRound
+  );
+
   const handleFailedDefence = useCallback(() => {
     setIsRoundLost(true);
-
-    const defendingPlayer = players.current[defendingPlayerIdx];
-
-    const attackAndDefendCardIndexes = [
-      ...attackCardIndexes.current,
-      ...defendCardIndexes.current,
-    ];
-
-    players.current = players.current.map((player) =>
-      player === defendingPlayer
-        ? {
-            ...player,
-            cardIndexes: [...player.cardIndexes, ...attackAndDefendCardIndexes],
-          }
-        : player
-    );
-
-    const attackAndDefendRefs = attackAndDefendCardIndexes.map(
-      (idx) => cardRefs.current[idx]
-    );
-
-    setCards((prev) =>
-      prev.map((card, i) =>
-        attackAndDefendCardIndexes.includes(i)
-          ? {
-              ...card,
-              isFaceUp:
-                players.current[defendingPlayerIdx] ===
-                userPlayer(players.current),
-            }
-          : card
-      )
-    );
-    attackCardIndexes.current = [];
-    defendCardIndexes.current = [];
-
-    gsap.set(attackAndDefendRefs, {
-      x: 0,
-      y: 0,
-      yPercent: 0,
-      rotateZ: defendingPlayer.cardRotateZ,
-    });
-
-    const state = Flip.getState(attackAndDefendRefs);
-
-    attackAndDefendRefs.forEach((ref) => {
-      assert(ref);
-      ref.className = "";
-      ref.classList.add(defendingPlayer.cardCssClassName);
-    });
-
-    Flip.from(state, {
-      duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
-      onComplete: () => {
-        nextRound();
-      },
-    });
-  }, [defendingPlayerIdx, nextRound]);
+    failedDefenceHandler();
+  }, [failedDefenceHandler]);
 
   const handleFailedAttack = useCallback(() => {
     setSelectedCardIdx(null);
