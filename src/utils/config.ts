@@ -32,3 +32,5 @@ export const PLAYERS = Array(PLAYER_COUNT)
   }));
 
 assert(PLAYERS.filter((player) => player.isUser).length === 1);
+
+export const CARD_MOVEMENT_DURATION_IN_SECONDS = 1;

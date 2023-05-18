@@ -4,6 +4,7 @@ import { useCardSize } from "../../hooks/use-card-size";
 import {
   CARDS_PER_PLAYER,
   CARD_COUNT_FOR_ANIMATION,
+  CARD_MOVEMENT_DURATION_IN_SECONDS,
   PLAYER_COUNT,
 } from "../../utils/config";
 import assert from "assert";
@@ -110,7 +111,7 @@ export default function CardDistributionAnimation(
 
         const tl = gsap.timeline({
           defaults: {
-            duration: 0.9,
+            duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
             ease: "back.out(0.7)",
           },
           onComplete: () => {
@@ -236,7 +237,7 @@ export default function CardDistributionAnimation(
               (cardHeight - cardWidth) / 2,
             y: () =>
               -document.documentElement.clientHeight / 2 + cardHeight / 2,
-            duration: 1,
+            duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
             delay: 0.5,
             ease: "none",
           }
@@ -250,7 +251,7 @@ export default function CardDistributionAnimation(
             x: () => -document.documentElement.clientWidth / 2 + cardWidth / 2,
             y: () =>
               -document.documentElement.clientHeight / 2 + cardHeight / 2,
-            duration: 1,
+            duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
             ease: "none",
             onComplete: () => {
               const els = document.querySelectorAll(

@@ -18,6 +18,7 @@ import assert from "assert";
 import {
   CARDS_PER_PLAYER,
   CARD_COUNT_FOR_ANIMATION,
+  CARD_MOVEMENT_DURATION_IN_SECONDS,
   DECK,
   IPlayer,
   MAX_ATTACK_CARDS,
@@ -32,7 +33,6 @@ import GameOverScreen from "../../../components/game-over-screen/game-over-scree
 import Shield from "../../../components/shield/shield";
 import { useCheckGameOver } from "../../../utils/use-check-game-over";
 
-// TODO: extract some animations to hooks/animations/
 // TODO: use more useRef ?
 
 gsap.registerPlugin(Flip);
@@ -151,7 +151,7 @@ export default function GameScene() {
       });
 
       Flip.from(state, {
-        duration: 1,
+        duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
         onComplete: () => {
           onComplete?.();
         },
@@ -288,7 +288,7 @@ export default function GameScene() {
         });
 
         Flip.from(state, {
-          duration: 1,
+          duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
           stagger: 0.2,
           onComplete: handleAnimationComplete,
         });
@@ -399,7 +399,7 @@ export default function GameScene() {
     });
 
     Flip.from(state, {
-      duration: 1,
+      duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
       onComplete: () => {
         nextRound();
       },
@@ -542,7 +542,7 @@ export default function GameScene() {
       });
 
       Flip.from(state, {
-        duration: 1,
+        duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
         onComplete: () => {
           onSuccess?.();
         },
@@ -648,7 +648,7 @@ export default function GameScene() {
         });
 
         Flip.from(state, {
-          duration: 1,
+          duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
           onComplete: () => {
             if (defendCardIdx === curDefendCardIndexes.at(-1)) {
               onSuccess?.();
