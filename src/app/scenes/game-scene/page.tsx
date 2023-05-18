@@ -28,8 +28,8 @@ import { useCardSize } from "../../../hooks/use-card-size";
 import CardDistributionAnimation from "../../../components/card-distribution-animation/card-distribution-animation";
 import { useCardSort } from "../../../hooks/use-card-sort";
 import { useSelectedCardIdx } from "../../../hooks/use-selected-card-idx";
-import { getShieldCssClass } from "../../../utils/get-shield-css-class";
 import GameOverScreen from "../../../components/game-over-screen/game-over-screen";
+import Shield from "../../../components/shield/shield";
 
 // TODO: extract some animations to hooks/animations/
 // TODO: use more useRef ?
@@ -41,7 +41,6 @@ export default function GameScene() {
   const [cards, setCards] = useState<ICard[]>(DECK);
   const players = useRef<IPlayer[]>(PLAYERS);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const shieldRef = useRef<HTMLDivElement | null>(null);
   const attackCardIndexes = useRef<number[]>([]);
   const defendCardIndexes = useRef<number[]>([]);
   const discardedCardIndexes = useRef<number[]>([]);
@@ -856,19 +855,6 @@ export default function GameScene() {
     handleFailedAttack,
   ]);
 
-  useEffect(() => {
-    if (!isGameStarted) {
-      return;
-    }
-
-    assert(shieldRef.current);
-
-    shieldRef.current.className = "";
-    shieldRef.current.classList.add(
-      getShieldCssClass(players.current[defendingPlayerIdx].cardCssClassName)
-    );
-  }, [defendingPlayerIdx, isGameStarted]);
-
   const cardsToShow = useMemo<(ICard | null)[]>(
     () =>
       isGameStarted
@@ -883,6 +869,12 @@ export default function GameScene() {
   return (
     <>
       <GameOverScreen lostPlayer={lostPlayer} />
+
+      <Shield
+        isGameStarted={isGameStarted}
+        isRoundLost={isRoundLost}
+        defendingPlayer={players.current[defendingPlayerIdx]}
+      />
 
       <div>
         {cardWidth &&
@@ -913,19 +905,6 @@ export default function GameScene() {
           />
         </div>
       )}
-
-      <div ref={shieldRef} className={styles["hidden"]}>
-        <Image
-          src={
-            isRoundLost
-              ? "/images/shield-broken.png"
-              : "/images/shield-regular.png"
-          }
-          width={suitWidth}
-          height={suitHeight}
-          alt=""
-        />
-      </div>
 
       {showHelp && (
         <div className={styles.help}>
