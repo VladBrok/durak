@@ -36,6 +36,7 @@ import { useGiveCardsToEachPlayer } from "../../../hooks/use-give-cards-to-each-
 import { userPlayer } from "../../../utils/user-player";
 import { useHandleFailedDefence } from "../../../hooks/use-handle-failed-defence";
 import { useDiscardCards } from "../../../hooks/use-discard-cards";
+import { getRandomInteger } from "../../../utils/random-integer";
 
 // TODO: use more useRef ?
 
@@ -291,13 +292,15 @@ export default function GameScene() {
         );
         cardIdx = userPlayer(players.current).cardIndexes[selectedCardIdx];
       } else {
-        const idx = player.cardIndexes.find((idx) =>
-          canAttackWith(
-            cards[idx],
-            attackCardIndexes.current.map((x) => cards[x]),
-            defendCardIndexes.current.map((x) => cards[x])
-          )
-        );
+        const idx = attackCardIndexes.current.length
+          ? player.cardIndexes.find((idx) =>
+              canAttackWith(
+                cards[idx],
+                attackCardIndexes.current.map((x) => cards[x]),
+                defendCardIndexes.current.map((x) => cards[x])
+              )
+            )
+          : player.cardIndexes[getRandomInteger(0, player.cardIndexes.length)];
 
         if (idx == null) {
           console.log("no card to attack");
