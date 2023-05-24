@@ -28,7 +28,9 @@ export default function TextButton(props: ITextButtonProps) {
       className={styles["container"]}
       onClick={props.onClick}
       disabled={props.disabled}
-      style={{ "--default-text-button-scale": `${props.scale ?? 1}` }}
+      style={{
+        ["--default-text-button-scale" as string]: `${props.scale ?? 1}`,
+      }}
     >
       <svg
         className={styles["text-svg"]}
