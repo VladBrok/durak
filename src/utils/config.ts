@@ -1,6 +1,6 @@
 import assert from "assert";
 import { getCardIndexesForPlayer } from "./get-card-indexes-for-player";
-import { CARD_COUNT, makeShuffledDeck } from "./card";
+import { CARD_COUNT, makeDeck } from "./card";
 import styles from "../app/scenes/game-scene/page.module.css";
 
 export interface IPlayer {
@@ -14,7 +14,7 @@ export const MAX_ATTACK_CARDS = 6;
 export const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
 export const PLAYER_COUNT = 4;
 export const CARDS_PER_PLAYER = 6;
-export const DECK = makeShuffledDeck();
+export const DECK = makeDeck({ isShuffled: true });
 export const PLAYERS = Array(PLAYER_COUNT)
   .fill(null)
   .map<IPlayer>((_, i) => ({

@@ -24,8 +24,8 @@ export function beats(a: ICard, b: ICard): boolean {
   return a.isTrump;
 }
 
-export function getImageSrc(card: ICard): string {
-  if (!card.isFaceUp) {
+export function getImageSrc(card: ICard, forceFaceUp = false): string {
+  if (!card.isFaceUp && !forceFaceUp) {
     return "/images/cards/card-back.png";
   }
 
@@ -36,7 +36,7 @@ export function getSuitImageSrc(card: ICard): string {
   return `/images/suits/${card.suit.toLowerCase()}.png`;
 }
 
-export function makeShuffledDeck(): ICard[] {
+export function makeDeck({ isShuffled }: { isShuffled: boolean }): ICard[] {
   const cards: (ICard | null)[] = Array(CARD_COUNT).fill(null);
   let cardIdx = 0;
 
@@ -51,7 +51,9 @@ export function makeShuffledDeck(): ICard[] {
     }
   }
 
-  shuffle(cards);
+  if (isShuffled) {
+    shuffle(cards);
+  }
 
   return cards.map((card) => {
     assert(card !== null);

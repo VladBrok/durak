@@ -13,6 +13,7 @@ import {
   cardComparator,
   getImageSrc,
   getSuitImageSrc,
+  makeDeck,
 } from "../../../utils/card";
 import assert from "assert";
 import {
@@ -700,6 +701,22 @@ export default function GameScene() {
 
   return (
     <>
+      {/* preload card images */}
+      {/* TODO: refactor */}
+      {makeDeck({ isShuffled: false }).map((card, i) => {
+        return (
+          <Image
+            style={{ position: "fixed", top: "100%", left: "100%" }}
+            key={i}
+            src={getImageSrc(card, true)}
+            width={cardWidth}
+            height={cardHeight}
+            alt=""
+            priority
+          />
+        );
+      })}
+
       <GameOverScreen lostPlayer={lostPlayer} />
 
       <Shield
