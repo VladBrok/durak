@@ -58,6 +58,8 @@ export default function GameScene() {
   const [forceBotAttack, setForceBotAttack] = useState(false);
   const [isRoundLost, setIsRoundLost] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
+  const [isPlayerMoveAnimationDone, setIsPlayerMoveAnimationDone] =
+    useState(true);
 
   const suitWidth = cardWidth / 2;
   const suitHeight = cardHeight / 2.5;
@@ -500,28 +502,35 @@ export default function GameScene() {
           }
 
           const func = activePlayerIdx === defendingPlayerIdx ? defend : attack;
-
           let newSelectedCardIdx: number | null = null;
+          setIsPlayerMoveAnimationDone(false);
 
-          const isDefended =
-            func(() => {
-              console.log("newSelectedCardIdx:", newSelectedCardIdx);
+          const isSuccess = func(() => {
+            console.log("newSelectedCardIdx:", newSelectedCardIdx);
 
-              if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
-                console.log("prev active idx:", activePlayerIdx);
-                prevActivePlayerIdx.current = activePlayerIdx;
-                setActivePlayerIdx(defendingPlayerIdx);
-                return;
-              }
+            setIsPlayerMoveAnimationDone(true);
 
-              if (newSelectedCardIdx === null) {
-                assert(prevActivePlayerIdx.current !== activePlayerIdx);
-                const prevIdx = prevActivePlayerIdx.current;
-                prevActivePlayerIdx.current = activePlayerIdx;
-                assert(prevIdx !== null);
-                setActivePlayerIdx(prevIdx);
-              }
-            }) && func === defend;
+            if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
+              console.log("prev active idx:", activePlayerIdx);
+              prevActivePlayerIdx.current = activePlayerIdx;
+              setActivePlayerIdx(defendingPlayerIdx);
+              return;
+            }
+
+            if (newSelectedCardIdx === null) {
+              assert(prevActivePlayerIdx.current !== activePlayerIdx);
+              const prevIdx = prevActivePlayerIdx.current;
+              prevActivePlayerIdx.current = activePlayerIdx;
+              assert(prevIdx !== null);
+              setActivePlayerIdx(prevIdx);
+            }
+          });
+
+          const isDefended = isSuccess && func === defend;
+
+          if (!isSuccess) {
+            setIsPlayerMoveAnimationDone(true);
+          }
 
           newSelectedCardIdx =
             isDefended &&
@@ -539,6 +548,10 @@ export default function GameScene() {
           setShowHelp(false);
           break;
         case "ArrowDown":
+          if (!isPlayerMoveAnimationDone) {
+            return;
+          }
+
           if (
             attackCardIndexes.current.length !==
             defendCardIndexes.current.length
@@ -581,13 +594,14 @@ export default function GameScene() {
       }
     };
   }, [
+    activePlayerIdx,
     selectedCardIdx,
     defendingPlayerIdx,
     isMaxAttackCardsReached,
-    activePlayerIdx,
     defend,
     attack,
     setSelectedCardIdx,
+    isPlayerMoveAnimationDone,
     handleFailedDefence,
     handleFailedAttack,
   ]);
