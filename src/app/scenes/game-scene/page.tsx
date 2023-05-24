@@ -58,8 +58,6 @@ export default function GameScene() {
   const [forceBotAttack, setForceBotAttack] = useState(false);
   const [isRoundLost, setIsRoundLost] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
-  const [isPlayerMoveAnimationDone, setIsPlayerMoveAnimationDone] =
-    useState(true);
 
   const suitWidth = cardWidth / 2;
   const suitHeight = cardHeight / 2.5;
@@ -503,12 +501,24 @@ export default function GameScene() {
 
           const func = activePlayerIdx === defendingPlayerIdx ? defend : attack;
           let newSelectedCardIdx: number | null = null;
-          setIsPlayerMoveAnimationDone(false);
+          const selectedCardIdxBackup = selectedCardIdx;
+          setSelectedCardIdx(null);
 
           const isSuccess = func(() => {
-            console.log("newSelectedCardIdx:", newSelectedCardIdx);
+            newSelectedCardIdx =
+              isDefended &&
+              attackCardIndexes.current.length ===
+                defendCardIndexes.current.length
+                ? null
+                : Math.min(
+                    selectedCardIdxBackup,
+                    userPlayer(players.current).cardIndexes.length -
+                      (isDefended ? 2 : 1)
+                  );
 
-            setIsPlayerMoveAnimationDone(true);
+            setSelectedCardIdx(newSelectedCardIdx);
+
+            console.log("newSelectedCardIdx:", newSelectedCardIdx);
 
             if (newSelectedCardIdx != null && newSelectedCardIdx < 0) {
               console.log("prev active idx:", activePlayerIdx);
@@ -529,29 +539,23 @@ export default function GameScene() {
           const isDefended = isSuccess && func === defend;
 
           if (!isSuccess) {
-            setIsPlayerMoveAnimationDone(true);
+            newSelectedCardIdx =
+              isDefended &&
+              attackCardIndexes.current.length ===
+                defendCardIndexes.current.length
+                ? null
+                : Math.min(
+                    selectedCardIdxBackup,
+                    userPlayer(players.current).cardIndexes.length -
+                      (isDefended ? 2 : 1)
+                  );
+
+            setSelectedCardIdx(newSelectedCardIdx);
           }
-
-          newSelectedCardIdx =
-            isDefended &&
-            attackCardIndexes.current.length ===
-              defendCardIndexes.current.length
-              ? null
-              : Math.min(
-                  selectedCardIdx,
-                  userPlayer(players.current).cardIndexes.length -
-                    (isDefended ? 2 : 1)
-                );
-
-          setSelectedCardIdx(newSelectedCardIdx);
 
           setShowHelp(false);
           break;
         case "ArrowDown":
-          if (!isPlayerMoveAnimationDone) {
-            return;
-          }
-
           if (
             attackCardIndexes.current.length !==
             defendCardIndexes.current.length
@@ -601,7 +605,6 @@ export default function GameScene() {
     defend,
     attack,
     setSelectedCardIdx,
-    isPlayerMoveAnimationDone,
     handleFailedDefence,
     handleFailedAttack,
   ]);
