@@ -722,7 +722,7 @@ export default function GameScene() {
                 width={cardWidth}
                 height={cardHeight}
                 alt=""
-                loading="eager"
+                priority
               />
             </div>
           ))}
@@ -735,7 +735,7 @@ export default function GameScene() {
             width={suitWidth}
             height={suitHeight}
             alt=""
-            loading="eager"
+            priority
           />
         </div>
       )}
