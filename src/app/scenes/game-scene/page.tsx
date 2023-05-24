@@ -61,17 +61,6 @@ export default function GameScene() {
   const [isRoundLost, setIsRoundLost] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
-  // TODO: remove
-  useEffect(() => {
-    const breakIt = () => {
-      assert(false);
-    };
-
-    document.addEventListener("click", breakIt);
-
-    return () => document.removeEventListener("click", breakIt);
-  }, []);
-
   const suitWidth = cardWidth / 2;
   const suitHeight = cardHeight / 2.5;
 
