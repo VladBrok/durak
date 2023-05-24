@@ -20,7 +20,6 @@ import {
   CARDS_PER_PLAYER,
   CARD_COUNT_FOR_ANIMATION,
   CARD_MOVEMENT_DURATION_IN_SECONDS,
-  DECK,
   IPlayer,
   MAX_ATTACK_CARDS,
   PLAYERS,
@@ -38,8 +37,9 @@ import { userPlayer } from "../../../utils/user-player";
 import { useHandleFailedDefence } from "../../../hooks/use-handle-failed-defence";
 import { useDiscardCards } from "../../../hooks/use-discard-cards";
 import { getRandomInteger } from "../../../utils/random-integer";
+import CardImagesPreloader from "../../../components/card-images-preloader/card-images-preloader";
 
-// TODO: use more useRef ?
+const DECK = makeDeck({ isShuffled: false });
 
 gsap.registerPlugin(Flip);
 
@@ -701,21 +701,7 @@ export default function GameScene() {
 
   return (
     <>
-      {/* preload card images */}
-      {/* TODO: refactor */}
-      {makeDeck({ isShuffled: false }).map((card, i) => {
-        return (
-          <Image
-            style={{ position: "fixed", top: "100%", left: "100%" }}
-            key={i}
-            src={getImageSrc(card, true)}
-            width={cardWidth}
-            height={cardHeight}
-            alt=""
-            priority
-          />
-        );
-      })}
+      <CardImagesPreloader />
 
       <GameOverScreen lostPlayer={lostPlayer} />
 
