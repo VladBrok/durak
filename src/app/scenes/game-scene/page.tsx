@@ -62,6 +62,7 @@ export default function GameScene() {
   const [lostPlayer, setLostPlayer] = useState<IPlayer | null>(null);
   const [forceBotAttack, setForceBotAttack] = useState(false);
   const [isRoundLost, setIsRoundLost] = useState(false);
+  const [mobile, setMobile] = useState(false);
   const prevActivePlayerIdx = useRef<null | number>(null);
 
   const suitWidth = cardWidth / 2;
@@ -618,7 +619,7 @@ export default function GameScene() {
   );
 
   useEffect(() => {
-    if (isMobile()) {
+    if (mobile) {
       return;
     }
 
@@ -628,7 +629,7 @@ export default function GameScene() {
     document.addEventListener("keydown", handler);
 
     return () => document.removeEventListener("keydown", handler);
-  }, [handleButtonPress]);
+  }, [handleButtonPress, mobile]);
 
   // Bot attack/defence
   useEffect(() => {
@@ -708,6 +709,15 @@ export default function GameScene() {
     [cards, isGameStarted]
   );
 
+  const typeofWindow = typeof window;
+  useEffect(() => {
+    if (typeofWindow === "undefined") {
+      return;
+    }
+
+    setMobile(isMobile());
+  }, [typeofWindow]);
+
   return (
     <>
       <CardImagesPreloader />
@@ -772,7 +782,7 @@ export default function GameScene() {
         revealUserCards={revealUserCards}
       />
 
-      {isMobile() && <MobileControls onClick={handleButtonPress} />}
+      {mobile && <MobileControls onClick={handleButtonPress} />}
     </>
   );
 }
