@@ -1,0 +1,28 @@
+.container {
+  position: absolute;
+  bottom: 2rem;
+  right: 7rem;
+  width: max-content;
+  --mobile-controls-gap: 0.8rem;
+}
+
+.top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--mobile-controls-gap);
+}
+
+.bottom {
+  display: flex;
+  gap: var(--mobile-controls-gap);
+}
+
+.button:active {
+  transform: scale(1.1);
+}
+
+.button-position-fixup {
+  position: relative;
+  bottom: 4px;
+}

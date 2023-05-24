@@ -20,6 +20,7 @@ import {
   CARDS_PER_PLAYER,
   CARD_COUNT_FOR_ANIMATION,
   CARD_MOVEMENT_DURATION_IN_SECONDS,
+  ControlButton,
   IPlayer,
   MAX_ATTACK_CARDS,
   PLAYERS,
@@ -38,6 +39,8 @@ import { useHandleFailedDefence } from "../../../hooks/use-handle-failed-defence
 import { useDiscardCards } from "../../../hooks/use-discard-cards";
 import { getRandomInteger } from "../../../utils/random-integer";
 import CardImagesPreloader from "../../../components/card-images-preloader/card-images-preloader";
+import MobileControls from "../../../components/mobile-controls/mobile-controls";
+import { isMobile } from "../../../utils/is-mobile";
 
 const DECK = makeDeck({ isShuffled: false });
 
@@ -486,14 +489,14 @@ export default function GameScene() {
     ]
   );
 
-  const handleKeydown = useCallback(() => {
-    return (e: KeyboardEvent) => {
+  const handleButtonPress = useCallback(
+    (button: ControlButton) => {
       console.log(activePlayerIdx, prevActivePlayerIdx.current);
       if (selectedCardIdx === null || selectedCardIdx < 0) {
         return;
       }
 
-      switch (e.key) {
+      switch (button) {
         case "ArrowUp":
           if (
             players.current[defendingPlayerIdx] !==
@@ -600,26 +603,32 @@ export default function GameScene() {
         default:
           break;
       }
-    };
-  }, [
-    activePlayerIdx,
-    selectedCardIdx,
-    defendingPlayerIdx,
-    isMaxAttackCardsReached,
-    defend,
-    attack,
-    setSelectedCardIdx,
-    handleFailedDefence,
-    handleFailedAttack,
-  ]);
+    },
+    [
+      activePlayerIdx,
+      selectedCardIdx,
+      defendingPlayerIdx,
+      isMaxAttackCardsReached,
+      defend,
+      attack,
+      setSelectedCardIdx,
+      handleFailedDefence,
+      handleFailedAttack,
+    ]
+  );
 
   useEffect(() => {
-    const handler = handleKeydown();
+    if (isMobile()) {
+      return;
+    }
+
+    const handler = (e: KeyboardEvent) =>
+      handleButtonPress(e.key as ControlButton);
 
     document.addEventListener("keydown", handler);
 
     return () => document.removeEventListener("keydown", handler);
-  }, [handleKeydown]);
+  }, [handleButtonPress]);
 
   // Bot attack/defence
   useEffect(() => {
@@ -762,6 +771,8 @@ export default function GameScene() {
         setTrump={setTrump}
         revealUserCards={revealUserCards}
       />
+
+      {isMobile() && <MobileControls onClick={handleButtonPress} />}
     </>
   );
 }

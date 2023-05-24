@@ -10,6 +10,12 @@ export interface IPlayer {
   cardRotateZ: number;
 }
 
+export type ControlButton =
+  | "ArrowUp"
+  | "ArrowDown"
+  | "ArrowLeft"
+  | "ArrowRight";
+
 export const MAX_ATTACK_CARDS = 6;
 export const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 44;
 export const PLAYER_COUNT = 4;
