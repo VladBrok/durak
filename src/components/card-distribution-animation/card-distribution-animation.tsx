@@ -10,6 +10,7 @@ import {
 import assert from "assert";
 import TextButton from "../text-button/text-button";
 import { gsap } from "gsap";
+import { CARD_COUNT } from "../../utils/card";
 
 export interface ICardDistributionAnimationProps {
   styles: Record<string, string>;
@@ -85,11 +86,11 @@ export default function CardDistributionAnimation(
       zIndex: -5,
       duration: 1.5,
       stagger: {
-        each: 0.1,
+        each: 0.14,
         onComplete: () => {
           cardsAtCenterCount++;
 
-          if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 15) {
+          if (CARD_COUNT_FOR_ANIMATION + CARD_COUNT - cardsAtCenterCount < 55) {
             return;
           }
 
