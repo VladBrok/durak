@@ -1,9 +1,10 @@
 .container {
   position: absolute;
   bottom: 2rem;
-  right: 6.5rem;
+  right: 5%;
   width: max-content;
   --mobile-controls-gap: 0.8rem;
+  z-index: 50;
 }
 
 .top {
