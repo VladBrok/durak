@@ -44,7 +44,7 @@ export default function CardDistributionAnimation(
       x: () => document.documentElement.clientWidth,
     });
 
-    const cornerMovementTl = gsap.timeline({ defaults: { duration: 2 } });
+    const cornerMovementTl = gsap.timeline({ defaults: { duration: 1.5 } });
 
     cornerMovementTl.to(`.${props.styles.card}`, {
       y: () => document.documentElement.clientHeight + cardHeight,
@@ -86,22 +86,22 @@ export default function CardDistributionAnimation(
       duration: 1.5,
       stagger: {
         each: 0.1,
-        // onComplete: () => {
-        //   cardsAtCenterCount++;
+        onComplete: () => {
+          cardsAtCenterCount++;
 
-        //   if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 20) {
-        //     return;
-        //   }
+          if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 15) {
+            return;
+          }
 
-        //   [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
-        //     (el) => {
-        //       const z = (el as HTMLElement).style.zIndex;
-        //       if (z === "-5") {
-        //         gsap.set(el, { opacity: 0 });
-        //       }
-        //     }
-        //   );
-        // },
+          [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
+            (el) => {
+              const z = (el as HTMLElement).style.zIndex;
+              if (z === "-5") {
+                gsap.set(el, { opacity: 0 });
+              }
+            }
+          );
+        },
       },
       onComplete: () => {
         [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
