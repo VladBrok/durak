@@ -782,7 +782,9 @@ export default function GameScene() {
         revealUserCards={revealUserCards}
       />
 
-      {mobile && <MobileControls onClick={handleButtonPress} />}
+      {isGameStarted && mobile && (
+        <MobileControls onClick={handleButtonPress} />
+      )}
     </>
   );
 }
