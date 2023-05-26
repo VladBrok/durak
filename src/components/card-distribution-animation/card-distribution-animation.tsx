@@ -26,8 +26,9 @@ export default function CardDistributionAnimation(
     (gsap.core.Timeline | gsap.core.Tween)[]
   >([]);
   const [showSkipAnimationButton, setShowSkipAnimationButton] = useState(
-    process.env.NODE_ENV === "production"
-  );
+    // process.env.NODE_ENV === "production"
+    true
+  ); // TODO
 
   const startedAnimation = useRef(false);
 
@@ -85,22 +86,22 @@ export default function CardDistributionAnimation(
       duration: 1.5,
       stagger: {
         each: 0.1,
-        onComplete: () => {
-          cardsAtCenterCount++;
+        // onComplete: () => {
+        //   cardsAtCenterCount++;
 
-          if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 20) {
-            return;
-          }
+        //   if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 20) {
+        //     return;
+        //   }
 
-          [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
-            (el) => {
-              const z = (el as HTMLElement).style.zIndex;
-              if (z === "-5") {
-                gsap.set(el, { opacity: 0 });
-              }
-            }
-          );
-        },
+        //   [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
+        //     (el) => {
+        //       const z = (el as HTMLElement).style.zIndex;
+        //       if (z === "-5") {
+        //         gsap.set(el, { opacity: 0 });
+        //       }
+        //     }
+        //   );
+        // },
       },
       onComplete: () => {
         [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
@@ -294,7 +295,7 @@ export default function CardDistributionAnimation(
     });
 
     setTweens((prev) => [...prev, tw]);
-  }, [cardWidth, cardHeight]);
+  }, [cardWidth, cardHeight, props]);
 
   useEffect(() => {
     if (showSkipAnimationButton) {
