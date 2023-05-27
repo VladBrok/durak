@@ -10,7 +10,6 @@ import {
 import assert from "assert";
 import TextButton from "../text-button/text-button";
 import { gsap } from "gsap";
-import { CARD_COUNT } from "../../utils/card";
 import { screenHeight, screenWidth } from "../../utils/screen";
 
 export interface ICardDistributionAnimationProps {
