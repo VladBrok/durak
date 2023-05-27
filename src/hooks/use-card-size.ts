@@ -6,9 +6,8 @@ export function useCardSize(): [number, number] {
   const [cardHeight, setCardHeight] = useState(0);
 
   useEffect(() => {
-    // TODO: remove "/ 2"
-    setCardWidth(getCssVarValue("--card-width") / 2);
-    setCardHeight(getCssVarValue("--card-height") / 2);
+    setCardWidth(getCssVarValue("--card-width"));
+    setCardHeight(getCssVarValue("--card-height"));
   }, []);
 
   return [cardWidth, cardHeight];
