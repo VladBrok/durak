@@ -4,7 +4,7 @@
   right: 5%;
   width: max-content;
   --mobile-controls-gap: 0.8rem;
-  z-index: 50;
+  z-index: 120;
 }
 
 .top {
