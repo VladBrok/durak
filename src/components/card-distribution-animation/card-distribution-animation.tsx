@@ -11,6 +11,7 @@ import assert from "assert";
 import TextButton from "../text-button/text-button";
 import { gsap } from "gsap";
 import { CARD_COUNT } from "../../utils/card";
+import { screenHeight, screenWidth } from "../../utils/screen";
 
 export interface ICardDistributionAnimationProps {
   styles: Record<string, string>;
@@ -42,13 +43,13 @@ export default function CardDistributionAnimation(
 
     gsap.set(`.${props.styles.card}`, {
       y: 0,
-      x: () => document.documentElement.clientWidth,
+      x: () => screenWidth(),
     });
 
     const cornerMovementTl = gsap.timeline({ defaults: { duration: 1.5 } });
 
     cornerMovementTl.to(`.${props.styles.card}`, {
-      y: () => document.documentElement.clientHeight + cardHeight,
+      y: () => screenHeight() + cardHeight,
     });
     cornerMovementTl.to(
       `.${props.styles.card}`,
@@ -67,7 +68,7 @@ export default function CardDistributionAnimation(
     cornerMovementTl.to(
       `.${props.styles.card}`,
       {
-        x: () => document.documentElement.clientWidth + cardWidth,
+        x: () => screenWidth() + cardWidth,
       },
       "<95%"
     );
@@ -77,8 +78,8 @@ export default function CardDistributionAnimation(
     let cardsAtCenterCount = 0;
 
     const tw = gsap.to(`.${props.styles.card}`, {
-      y: () => document.documentElement.clientHeight / 2 + cardHeight / 2,
-      x: () => document.documentElement.clientWidth / 2 - cardWidth / 2,
+      y: () => screenHeight() / 2 + cardHeight / 2,
+      x: () => screenWidth() / 2 - cardWidth / 2,
       duration: 1.5,
       stagger: {
         each: 0.14,
@@ -125,7 +126,7 @@ export default function CardDistributionAnimation(
           tl.to(
             `.${props.styles["card-static-center"]}:nth-child(${childIdx})`,
             {
-              y: () => -document.documentElement.clientHeight / 2,
+              y: () => -screenHeight() / 2,
               onComplete: () => {
                 const el = document.querySelector(
                   `.${props.styles["card-static-center"]}:nth-child(${childIdx})`
@@ -144,7 +145,7 @@ export default function CardDistributionAnimation(
                 childIdx + 1
               })`,
               {
-                x: () => document.documentElement.clientWidth / 2,
+                x: () => screenWidth() / 2,
                 onComplete: () => {
                   const el = document.querySelector(
                     `.${props.styles["card-static-center"]}:nth-child(${
@@ -165,8 +166,7 @@ export default function CardDistributionAnimation(
               childIdx + (PLAYER_COUNT > 2 ? 2 : 1)
             })`,
             {
-              y: () =>
-                document.documentElement.clientHeight / 2 - cardHeight / 2,
+              y: () => screenHeight() / 2 - cardHeight / 2,
               onComplete: () => {
                 const el = document.querySelector(
                   `.${props.styles["card-static-center"]}:nth-child(${
@@ -187,7 +187,7 @@ export default function CardDistributionAnimation(
                 childIdx + 3
               })`,
               {
-                x: () => -document.documentElement.clientWidth / 2,
+                x: () => -screenWidth() / 2,
                 onComplete: () => {
                   const el = document.querySelector(
                     `.${props.styles["card-static-center"]}:nth-child(${
@@ -228,11 +228,8 @@ export default function CardDistributionAnimation(
           })`,
           {
             x: () =>
-              -document.documentElement.clientWidth / 2 +
-              cardWidth / 2 +
-              (cardHeight - cardWidth) / 2,
-            y: () =>
-              -document.documentElement.clientHeight / 2 + cardHeight / 2,
+              -screenWidth() / 2 + cardWidth / 2 + (cardHeight - cardWidth) / 2,
+            y: () => -screenHeight() / 2 + cardHeight / 2,
             duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
             delay: 0.5,
             ease: "none",
@@ -244,9 +241,8 @@ export default function CardDistributionAnimation(
             PLAYER_COUNT * CARDS_PER_PLAYER + 2
           })`,
           {
-            x: () => -document.documentElement.clientWidth / 2 + cardWidth / 2,
-            y: () =>
-              -document.documentElement.clientHeight / 2 + cardHeight / 2,
+            x: () => -screenWidth() / 2 + cardWidth / 2,
+            y: () => -screenHeight() / 2 + cardHeight / 2,
             duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
             ease: "none",
             onComplete: () => {
