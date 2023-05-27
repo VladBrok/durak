@@ -119,11 +119,11 @@
 
 .help {
   position: absolute;
-  top: 65%;
+  top: 80%;
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 1.7rem;
+  font-size: 1rem;
   z-index: 100;
 }
 
@@ -205,4 +205,11 @@
 
 .hidden {
   display: none;
+}
+
+@media screen and (min-width: 724px) {
+  .help {
+    top: 65%;
+    font-size: 1.7rem;
+  }
 }

@@ -81,8 +81,6 @@ export default function GameScene() {
       setAttackingPlayerIdx(1);
       setDefendingPlayerIdx(0);
 
-      setSelectedCardIdx(0);
-
       setShowHelp(true);
       setIsGameStarted(true);
     });

@@ -1,7 +1,14 @@
 :root {
-  --card-width: 79px;
-  --card-height: 123px;
+  --card-width: 39px;
+  --card-height: 61px;
   --attack-card-gap: calc(var(--card-width) / 1.5);
+}
+
+@media screen and (min-width: 724px) {
+  :root {
+    --card-width: 79px;
+    --card-height: 123px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
