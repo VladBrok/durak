@@ -49,13 +49,11 @@ export default function CardDistributionAnimation(
 
     cornerMovementTl.to(`.${props.styles.card}`, {
       y: () => document.documentElement.clientHeight + cardHeight,
-      zIndex: 0,
     });
     cornerMovementTl.to(
       `.${props.styles.card}`,
       {
         x: () => -cardWidth,
-        zIndex: 0,
       },
       "<95%"
     );
@@ -63,7 +61,6 @@ export default function CardDistributionAnimation(
       `.${props.styles.card}`,
       {
         y: 0,
-        zIndex: 0,
       },
       "<95%"
     );
@@ -71,7 +68,6 @@ export default function CardDistributionAnimation(
       `.${props.styles.card}`,
       {
         x: () => document.documentElement.clientWidth + cardWidth,
-        zIndex: 0,
       },
       "<95%"
     );
@@ -83,7 +79,6 @@ export default function CardDistributionAnimation(
     const tw = gsap.to(`.${props.styles.card}`, {
       y: () => document.documentElement.clientHeight / 2 + cardHeight / 2,
       x: () => document.documentElement.clientWidth / 2 - cardWidth / 2,
-      zIndex: -5,
       duration: 1.5,
       stagger: {
         each: 0.14,
@@ -94,14 +89,11 @@ export default function CardDistributionAnimation(
             return;
           }
 
-          [...document.querySelectorAll(`.${props.styles.card}`)].forEach(
-            (el) => {
-              const z = (el as HTMLElement).style.zIndex;
-              if (z === "-5") {
-                gsap.set(el, { opacity: 0 });
-              }
-            }
+          const el = document.querySelector(
+            `.${props.styles.card}:nth-child(${cardsAtCenterCount})`
           );
+          assert(el);
+          gsap.set(el, { opacity: 0 });
         },
       },
       onComplete: () => {
