@@ -731,8 +731,8 @@ export default function GameScene() {
       />
 
       <div>
-        {cardWidth &&
-          cardHeight &&
+        {Boolean(cardWidth) &&
+          Boolean(cardHeight) &&
           cardsToShow.map((card, i) => (
             <div
               className={`${styles.card}`}
