@@ -96,6 +96,7 @@ export default function CardDistributionAnimation(
 
           const el = cardElements[cardsAtCenterCount - 1];
           assert(el);
+          gsap.set(el, { opacity: 0 });
           gsap.killTweensOf(el);
         },
       },
@@ -104,7 +105,7 @@ export default function CardDistributionAnimation(
           (el) => {
             el.classList.remove(props.styles.card);
             el.classList.add(props.styles["card-static-center"]);
-            gsap.set(el, { x: 0, y: 0 });
+            gsap.set(el, { opacity: 1, x: 0, y: 0 });
           }
         );
 
