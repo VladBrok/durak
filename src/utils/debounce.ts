@@ -13,7 +13,7 @@ export function debounce(func: Function, wait = 100) {
     }
   }
 
-  const debounced = function () {
+  const debounced = function (this: any) {
     context = this;
     args = arguments;
     timestamp = Date.now();
