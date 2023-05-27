@@ -41,32 +41,36 @@ export default function CardDistributionAnimation(
 
     startedAnimation.current = true;
 
-    gsap.set(`.${props.styles.card}`, {
+    const cardElements = [
+      ...document.querySelectorAll(`.${props.styles.card}`),
+    ];
+
+    gsap.set(cardElements, {
       y: 0,
       x: () => screenWidth(),
     });
 
     const cornerMovementTl = gsap.timeline({ defaults: { duration: 1.7 } });
 
-    cornerMovementTl.to(`.${props.styles.card}`, {
+    cornerMovementTl.to(cardElements, {
       y: () => screenHeight() + cardHeight,
     });
     cornerMovementTl.to(
-      `.${props.styles.card}`,
+      cardElements,
       {
         x: () => -cardWidth,
       },
       "<95%"
     );
     cornerMovementTl.to(
-      `.${props.styles.card}`,
+      cardElements,
       {
         y: 0,
       },
       "<95%"
     );
     cornerMovementTl.to(
-      `.${props.styles.card}`,
+      cardElements,
       {
         x: () => screenWidth() + cardWidth,
       },
@@ -77,7 +81,7 @@ export default function CardDistributionAnimation(
 
     let cardsAtCenterCount = 0;
 
-    const tw = gsap.to(`.${props.styles.card}`, {
+    const tw = gsap.to(cardElements, {
       y: () => screenHeight() / 2 + cardHeight / 2,
       x: () => screenWidth() / 2 - cardWidth / 2,
       duration: 1.5,
@@ -86,15 +90,13 @@ export default function CardDistributionAnimation(
         onComplete: () => {
           cardsAtCenterCount++;
 
-          if (CARD_COUNT_FOR_ANIMATION + CARD_COUNT - cardsAtCenterCount < 50) {
+          if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 10) {
             return;
           }
 
-          const el = document.querySelector(
-            `.${props.styles.card}:nth-child(${cardsAtCenterCount})`
-          );
+          const el = cardElements[cardsAtCenterCount - 1];
           assert(el);
-          gsap.set(el, { opacity: 0 });
+          gsap.killTweensOf(el);
         },
       },
       onComplete: () => {
@@ -102,7 +104,7 @@ export default function CardDistributionAnimation(
           (el) => {
             el.classList.remove(props.styles.card);
             el.classList.add(props.styles["card-static-center"]);
-            gsap.set(el, { opacity: 1, x: 0, y: 0 });
+            gsap.set(el, { x: 0, y: 0 });
           }
         );
 
