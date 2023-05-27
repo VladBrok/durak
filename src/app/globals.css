@@ -1,6 +1,6 @@
 :root {
-  --card-width: 39px;
-  --card-height: 61px;
+  --card-width: 52px;
+  --card-height: 82px;
   --attack-card-gap: calc(var(--card-width) / 1.5);
 }
 
