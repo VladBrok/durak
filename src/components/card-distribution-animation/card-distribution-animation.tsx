@@ -276,7 +276,6 @@ export default function CardDistributionAnimation(
               );
 
               props.revealUserCards();
-
               props.sortCards();
             },
           },
