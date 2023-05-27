@@ -42,7 +42,7 @@ import CardImagesPreloader from "../../../components/card-images-preloader/card-
 import MobileControls from "../../../components/mobile-controls/mobile-controls";
 import { isMobile } from "../../../utils/is-mobile";
 
-const DECK = makeDeck({ isShuffled: false });
+const DECK = makeDeck({ isShuffled: true });
 
 gsap.registerPlugin(Flip);
 
