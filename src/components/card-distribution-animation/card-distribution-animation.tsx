@@ -46,7 +46,7 @@ export default function CardDistributionAnimation(
       x: () => screenWidth(),
     });
 
-    const cornerMovementTl = gsap.timeline({ defaults: { duration: 1.5 } });
+    const cornerMovementTl = gsap.timeline({ defaults: { duration: 1.7 } });
 
     cornerMovementTl.to(`.${props.styles.card}`, {
       y: () => screenHeight() + cardHeight,
@@ -86,7 +86,7 @@ export default function CardDistributionAnimation(
         onComplete: () => {
           cardsAtCenterCount++;
 
-          if (CARD_COUNT_FOR_ANIMATION + CARD_COUNT - cardsAtCenterCount < 55) {
+          if (CARD_COUNT_FOR_ANIMATION + CARD_COUNT - cardsAtCenterCount < 50) {
             return;
           }
 
@@ -222,37 +222,33 @@ export default function CardDistributionAnimation(
           }
         );
 
-        tl.to(
-          `.${props.styles["card-static-center"]}:nth-child(${
-            PLAYER_COUNT * CARDS_PER_PLAYER + 1
-          })`,
-          {
-            x: () =>
-              -screenWidth() / 2 + cardWidth / 2 + (cardHeight - cardWidth) / 2,
-            y: () => -screenHeight() / 2 + cardHeight / 2,
-            duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
-            delay: 0.5,
-            ease: "none",
-          }
-        );
+        const remainingCards = [
+          ...document.querySelectorAll(
+            `.${props.styles["card-static-center"]}:nth-child(n+${
+              PLAYER_COUNT * CARDS_PER_PLAYER + 1
+            })`
+          ),
+        ];
+        gsap.set(remainingCards.slice(2), { opacity: 0 });
+
+        tl.to(remainingCards[0], {
+          x: () =>
+            -screenWidth() / 2 + cardWidth / 2 + (cardHeight - cardWidth) / 2,
+          y: () => -screenHeight() / 2 + cardHeight / 2,
+          duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
+          delay: 0.5,
+          ease: "none",
+        });
 
         tl.to(
-          `.${props.styles["card-static-center"]}:nth-child(n+${
-            PLAYER_COUNT * CARDS_PER_PLAYER + 2
-          })`,
+          remainingCards[1],
           {
             x: () => -screenWidth() / 2 + cardWidth / 2,
             y: () => -screenHeight() / 2 + cardHeight / 2,
             duration: CARD_MOVEMENT_DURATION_IN_SECONDS,
             ease: "none",
             onComplete: () => {
-              const els = document.querySelectorAll(
-                `.${props.styles["card-static-center"]}:nth-child(n+${
-                  PLAYER_COUNT * CARDS_PER_PLAYER + 1
-                })`
-              );
-              assert(els);
-              els.forEach((el, i) => {
+              remainingCards.forEach((el, i) => {
                 el.classList.remove(`${props.styles["card-static-center"]}`);
                 el.classList.add(
                   `${
@@ -261,7 +257,7 @@ export default function CardDistributionAnimation(
                       : props.styles["card-top-left"]
                   }`
                 );
-                gsap.set(el, { x: 0, y: 0 });
+                gsap.set(el, { opacity: 1, x: 0, y: 0 });
               });
 
               gsap.set(
