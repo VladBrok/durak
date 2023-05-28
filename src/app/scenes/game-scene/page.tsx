@@ -74,11 +74,12 @@ export default function GameScene() {
   );
   const sortCards = useCardSort(players, cardRefs, cards);
 
-  // TODO: set indexes differently
   function startGame(): void {
     sortCards(() => {
-      setActivePlayerIdx(1);
-      setAttackingPlayerIdx(1);
+      const userIdx = players.current.findIndex((x) => x.isUser);
+      setActivePlayerIdx(userIdx);
+      setAttackingPlayerIdx(userIdx);
+      setSelectedCardIdx(0);
       setDefendingPlayerIdx(0);
 
       setShowHelp(true);

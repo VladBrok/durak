@@ -1,6 +1,6 @@
 .container {
   position: absolute;
-  bottom: calc(var(--card-height) * 1.5 + 32px);
+  bottom: calc(var(--card-height) * 1.5 + 10px);
   left: 50%;
   transform: translateX(-50%);
   width: max-content;

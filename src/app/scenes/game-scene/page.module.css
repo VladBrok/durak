@@ -119,7 +119,7 @@
 
 .help {
   position: absolute;
-  top: 70%;
+  top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
@@ -209,7 +209,6 @@
 
 @media screen and (min-width: 724px) {
   .help {
-    top: 65%;
     font-size: 1.7rem;
   }
 }

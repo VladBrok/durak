@@ -6,7 +6,7 @@ export interface IMobileControlsProps {
   onClick: (button: ControlButton) => void;
 }
 
-const BUTTON_SIZE = 50;
+const BUTTON_SIZE = 40;
 
 export default function MobileControls(props: IMobileControlsProps) {
   return (
