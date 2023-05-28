@@ -1,6 +1,5 @@
 import assert from "assert";
 import { getCardIndexesForPlayer } from "./get-card-indexes-for-player";
-import { CARD_COUNT } from "./card";
 import styles from "../app/scenes/game-scene/page.module.css";
 
 export interface IPlayer {
@@ -17,7 +16,6 @@ export type ControlButton =
   | "ArrowRight";
 
 export const MAX_ATTACK_CARDS = 6;
-export const CARD_COUNT_FOR_ANIMATION = CARD_COUNT + 10;
 export const PLAYER_COUNT = 4;
 export const CARDS_PER_PLAYER = 6;
 export const PLAYERS = Array(PLAYER_COUNT)

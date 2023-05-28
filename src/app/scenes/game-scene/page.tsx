@@ -18,7 +18,6 @@ import {
 import assert from "assert";
 import {
   CARDS_PER_PLAYER,
-  CARD_COUNT_FOR_ANIMATION,
   CARD_MOVEMENT_DURATION_IN_SECONDS,
   ControlButton,
   IPlayer,
@@ -697,17 +696,6 @@ export default function GameScene() {
     handleFailedAttack,
   ]);
 
-  const cardsToShow = useMemo<(ICard | null)[]>(
-    () =>
-      isGameStarted
-        ? cards
-        : [
-            ...cards,
-            ...Array(CARD_COUNT_FOR_ANIMATION - CARD_COUNT).fill(null),
-          ],
-    [cards, isGameStarted]
-  );
-
   const typeofWindow = typeof window;
   useEffect(() => {
     if (typeofWindow === "undefined") {
@@ -732,7 +720,7 @@ export default function GameScene() {
       <div>
         {Boolean(cardWidth) &&
           Boolean(cardHeight) &&
-          cardsToShow.map((card, i) => (
+          cards.map((card, i) => (
             <div
               className={`${styles.card}`}
               key={i}

@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { useCardSize } from "../../hooks/use-card-size";
 import {
   CARDS_PER_PLAYER,
-  CARD_COUNT_FOR_ANIMATION,
   CARD_MOVEMENT_DURATION_IN_SECONDS,
   PLAYER_COUNT,
 } from "../../utils/config";
@@ -11,6 +10,7 @@ import assert from "assert";
 import TextButton from "../text-button/text-button";
 import { gsap } from "gsap";
 import { screenHeight, screenWidth } from "../../utils/screen";
+import { CARD_COUNT } from "../../utils/card";
 
 export interface ICardDistributionAnimationProps {
   styles: Record<string, string>;
@@ -49,7 +49,7 @@ export default function CardDistributionAnimation(
       x: () => screenWidth(),
     });
 
-    const cornerMovementTl = gsap.timeline({ defaults: { duration: 1.7 } });
+    const cornerMovementTl = gsap.timeline({ defaults: { duration: 2 } });
 
     cornerMovementTl.to(cardElements, {
       y: () => screenHeight() + cardHeight,
@@ -83,13 +83,13 @@ export default function CardDistributionAnimation(
     const tw = gsap.to(cardElements, {
       y: () => screenHeight() / 2 + cardHeight / 2,
       x: () => screenWidth() / 2 - cardWidth / 2,
-      duration: 1.5,
+      duration: 2,
       stagger: {
-        each: 0.14,
+        each: 0.19,
         onComplete: () => {
           cardsAtCenterCount++;
 
-          if (CARD_COUNT_FOR_ANIMATION - cardsAtCenterCount < 10) {
+          if (CARD_COUNT - cardsAtCenterCount < 10) {
             return;
           }
 
