@@ -1,3 +1,3 @@
 # Durak
 
-[demo](/public/demo/demo.mp4)
+[demo](/public/demo/demo.gif)
