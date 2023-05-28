@@ -1,3 +1,3 @@
 # Durak
 
-[demo](/public/demo/demo.gif)
+![Preview](/public/demo/demo.gif)
