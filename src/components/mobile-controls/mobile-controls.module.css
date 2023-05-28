@@ -1,7 +1,8 @@
 .container {
   position: absolute;
-  bottom: 32px;
-  right: 5%;
+  bottom: calc(var(--card-height) * 1.5 + 32px);
+  left: 50%;
+  transform: translateX(-50%);
   width: max-content;
   --mobile-controls-gap: 0.8rem;
   z-index: 120;
