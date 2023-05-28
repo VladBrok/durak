@@ -89,7 +89,7 @@ export default function CardDistributionAnimation(
         onComplete: () => {
           cardsAtCenterCount++;
 
-          if (CARD_COUNT - cardsAtCenterCount < 10) {
+          if (CARD_COUNT - cardsAtCenterCount < 5) {
             return;
           }
 

@@ -354,6 +354,7 @@ export default function GameScene() {
         x: 0,
         y: 0,
         yPercent: 0,
+        zIndex: 9,
       });
 
       Flip.from(state, {

@@ -1,3 +1,1 @@
 # Durak
-
-A card game
